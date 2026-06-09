@@ -117,6 +117,164 @@
   .panel { display: none; }
   .panel.active { display: block; }
 
+  /* ===== 汎用カードコンポーネント (Phase 2 全タブ共通) ===== */
+  .card {
+    background: var(--navy-2);
+    border: 1px solid var(--navy-3);
+    border-radius: 10px;
+    padding: 14px 14px 12px;
+    margin-bottom: 14px;
+  }
+  .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--navy-3);
+  }
+  .card-title {
+    margin: 0;
+    font-size: 14px;
+    color: var(--gold);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .btn-reset {
+    background: transparent;
+    border: 1px solid var(--navy-3);
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .btn-reset:hover, .btn-reset:focus-visible {
+    border-color: var(--gold);
+    color: var(--gold);
+    outline: none;
+  }
+
+  .field { margin-bottom: 10px; }
+  .field-label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+    letter-spacing: 0.04em;
+  }
+  .input-row {
+    display: flex;
+    gap: 6px;
+    align-items: stretch;
+  }
+  .input-row input.num-input {
+    flex: 1;
+    min-width: 0;
+    background: var(--navy);
+    border: 1px solid var(--navy-3);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 17px;
+    padding: 10px 12px;
+    text-align: right;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+  .input-row input.num-input:focus {
+    border-color: var(--gold);
+  }
+  .input-row input.num-input::placeholder {
+    color: #4a5670;
+  }
+  .unit-label {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+    min-width: 44px;
+    background: var(--navy-3);
+    border-radius: 6px;
+    color: var(--text-dim);
+    font-size: 12px;
+  }
+  .unit-toggle {
+    display: inline-flex;
+    background: var(--navy);
+    border: 1px solid var(--navy-3);
+    border-radius: 6px;
+    overflow: hidden;
+    flex: 0 0 auto;
+  }
+  .unit-toggle button {
+    background: transparent;
+    border: 0;
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 12px;
+    padding: 0 12px;
+    cursor: pointer;
+    min-width: 42px;
+    transition: all 0.15s ease;
+  }
+  .unit-toggle button.active {
+    background: var(--gold);
+    color: var(--navy);
+    font-weight: 700;
+  }
+
+  .results {
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: rgba(201, 168, 76, 0.07);
+    border: 1px solid rgba(201, 168, 76, 0.28);
+    border-radius: 8px;
+  }
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    padding: 4px 0;
+  }
+  .result-row + .result-row {
+    border-top: 1px dashed rgba(201, 168, 76, 0.18);
+    margin-top: 6px;
+    padding-top: 10px;
+  }
+  .result-label {
+    color: var(--text-dim);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+  }
+  .result-value {
+    color: var(--gold);
+    font-family: 'DM Mono', monospace;
+    font-size: 22px;
+    font-weight: 500;
+    text-align: right;
+  }
+  .result-value .unit {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-left: 6px;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .result-value.empty { color: #4a5670; }
+
+  .hint {
+    margin: 8px 0 0;
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  /* ===== Placeholder (未実装タブ用、Phase 1 から流用) ===== */
   .placeholder {
     margin-top: 24px;
     padding: 32px 16px;
@@ -184,7 +342,107 @@
 </nav>
 
 <main>
-  <section id="tsubo"    class="panel active" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>坪単価 / 面積</h2><p>㎡↔坪、坪単価↔㎡単価の換算<br>Phase 2 で実装予定</p></div></section>
+  <section id="tsubo" class="panel active" role="tabpanel">
+
+    <!-- ===== カード1: 坪単価計算 (価格・面積 → 坪単価/㎡単価) ===== -->
+    <div class="card" data-calc="tanka">
+      <div class="card-head">
+        <h2 class="card-title">坪単価 を出す</h2>
+        <button type="button" class="btn-reset" data-reset="tanka">リセット</button>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="tanka-price">価格</label>
+        <div class="input-row">
+          <input type="text" id="tanka-price" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+          <span class="unit-label">万円</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="tanka-area">面積</label>
+        <div class="input-row">
+          <input type="text" id="tanka-area" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+          <div class="unit-toggle" data-toggle="tanka">
+            <button type="button" data-unit="tsubo" class="active">坪</button>
+            <button type="button" data-unit="m2">㎡</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="results">
+        <div class="result-row">
+          <span class="result-label">坪単価</span>
+          <span class="result-value empty" id="tanka-out-tsubo">—<span class="unit">万円/坪</span></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">㎡単価</span>
+          <span class="result-value empty" id="tanka-out-m2">—<span class="unit">万円/㎡</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== カード2: 総額計算 (坪単価・面積 → 概算総額) ===== -->
+    <div class="card" data-calc="total">
+      <div class="card-head">
+        <h2 class="card-title">総額 を逆算</h2>
+        <button type="button" class="btn-reset" data-reset="total">リセット</button>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="total-tsubo">坪単価</label>
+        <div class="input-row">
+          <input type="text" id="total-tsubo" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+          <span class="unit-label">万円/坪</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="total-area">面積</label>
+        <div class="input-row">
+          <input type="text" id="total-area" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+          <div class="unit-toggle" data-toggle="total">
+            <button type="button" data-unit="tsubo" class="active">坪</button>
+            <button type="button" data-unit="m2">㎡</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="results">
+        <div class="result-row">
+          <span class="result-label">概算総額</span>
+          <span class="result-value empty" id="total-out">—<span class="unit">万円</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== カード3: 面積変換 (坪 ⇔ ㎡ 双方向) ===== -->
+    <div class="card" data-calc="conv">
+      <div class="card-head">
+        <h2 class="card-title">面積変換 (坪 ⇔ ㎡)</h2>
+        <button type="button" class="btn-reset" data-reset="conv">リセット</button>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="conv-tsubo">坪</label>
+        <div class="input-row">
+          <input type="text" id="conv-tsubo" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+          <span class="unit-label">坪</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="conv-m2">㎡</label>
+        <div class="input-row">
+          <input type="text" id="conv-m2" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+          <span class="unit-label">㎡</span>
+        </div>
+      </div>
+
+      <p class="hint">1坪 = 400/121 ㎡ ≒ 3.305785 ㎡</p>
+    </div>
+
+  </section>
   <section id="chukai"   class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>仲介手数料</h2><p>宅建業法に基づく速算式<br>Phase 2 で実装予定</p></div></section>
   <section id="inshi"    class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>印紙税</h2><p>不動産売買契約書 (軽減税率対応)<br>Phase 2 で実装予定</p></div></section>
   <section id="touroku"  class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>登録免許税</h2><p>所有権移転・抵当権設定<br>Phase 2 で実装予定</p></div></section>
@@ -202,6 +460,9 @@
 </footer>
 
 <script>
+  /* =========================================================
+   * タブ切替
+   * ========================================================= */
   const tabs   = document.querySelectorAll('.tab');
   const panels = document.querySelectorAll('.panel');
   tabs.forEach(tab => {
@@ -212,6 +473,150 @@
       tab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
     });
   });
+
+  /* =========================================================
+   * 汎用ヘルパー (Phase 2 全タブで再利用)
+   * ========================================================= */
+  const TSUBO_TO_M2 = 400 / 121; // 1坪 ≒ 3.305785㎡
+
+  function parseNum(v) {
+    if (v == null) return null;
+    const s = String(v).replace(/[,\s]/g, '');
+    if (s === '') return null;
+    const n = parseFloat(s);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function fmtNum(n, decimals = 2) {
+    if (n == null || !Number.isFinite(n)) return null;
+    return n.toLocaleString('ja-JP', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    });
+  }
+
+  // 結果表示要素を更新。unit は子要素 .unit に保持されている文字列を残す
+  function setResult(el, value, decimals = 2) {
+    const unit = el.querySelector('.unit');
+    const unitHtml = unit ? unit.outerHTML : '';
+    const text = fmtNum(value, decimals);
+    if (text == null) {
+      el.innerHTML = '—' + unitHtml;
+      el.classList.add('empty');
+    } else {
+      el.innerHTML = text + unitHtml;
+      el.classList.remove('empty');
+    }
+  }
+
+  // 単位トグル: data-toggle="<group>" 内の button[data-unit] を排他切替
+  // 切替時に onChange(unit) を呼ぶ
+  function setupUnitToggle(group, onChange) {
+    const wrap = document.querySelector(`[data-toggle="${group}"]`);
+    if (!wrap) return () => 'tsubo';
+    wrap.addEventListener('click', e => {
+      const btn = e.target.closest('button[data-unit]');
+      if (!btn) return;
+      wrap.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+      onChange(btn.dataset.unit);
+    });
+    return () => wrap.querySelector('button.active')?.dataset.unit || 'tsubo';
+  }
+
+  // 同一カード内の入力をまとめてリセット → 再計算
+  function setupReset(name, recalc) {
+    const btn = document.querySelector(`[data-reset="${name}"]`);
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      const card = btn.closest('.card');
+      card.querySelectorAll('input.num-input').forEach(i => { i.value = ''; });
+      recalc();
+    });
+  }
+
+  /* =========================================================
+   * カード1: 坪単価計算
+   * ========================================================= */
+  (() => {
+    const $price = document.getElementById('tanka-price');
+    const $area  = document.getElementById('tanka-area');
+    const $outT  = document.getElementById('tanka-out-tsubo');
+    const $outM  = document.getElementById('tanka-out-m2');
+    let getUnit;
+
+    function recalc() {
+      const price = parseNum($price.value);
+      const area  = parseNum($area.value);
+      const unit  = getUnit();
+      if (price == null || area == null || area === 0) {
+        setResult($outT, null);
+        setResult($outM, null);
+        return;
+      }
+      const tsubo = unit === 'tsubo' ? area : area / TSUBO_TO_M2;
+      const m2    = unit === 'tsubo' ? area * TSUBO_TO_M2 : area;
+      setResult($outT, price / tsubo);
+      setResult($outM, price / m2);
+    }
+
+    getUnit = setupUnitToggle('tanka', recalc);
+    setupReset('tanka', recalc);
+    [$price, $area].forEach(el => el.addEventListener('input', recalc));
+  })();
+
+  /* =========================================================
+   * カード2: 総額計算 (逆算)
+   * ========================================================= */
+  (() => {
+    const $tanka = document.getElementById('total-tsubo');
+    const $area  = document.getElementById('total-area');
+    const $out   = document.getElementById('total-out');
+    let getUnit;
+
+    function recalc() {
+      const tankaPerTsubo = parseNum($tanka.value);
+      const area          = parseNum($area.value);
+      const unit          = getUnit();
+      if (tankaPerTsubo == null || area == null) {
+        setResult($out, null);
+        return;
+      }
+      const tsubo = unit === 'tsubo' ? area : area / TSUBO_TO_M2;
+      setResult($out, tankaPerTsubo * tsubo);
+    }
+
+    getUnit = setupUnitToggle('total', recalc);
+    setupReset('total', recalc);
+    [$tanka, $area].forEach(el => el.addEventListener('input', recalc));
+  })();
+
+  /* =========================================================
+   * カード3: 面積変換 (坪 ⇔ ㎡ 双方向リアルタイム)
+   * ========================================================= */
+  (() => {
+    const $tsubo = document.getElementById('conv-tsubo');
+    const $m2    = document.getElementById('conv-m2');
+    let lock = false; // 互いの input イベントが連鎖しないよう片方向ロック
+
+    function syncFrom(src, dst, factor) {
+      if (lock) return;
+      const v = parseNum(src.value);
+      lock = true;
+      if (v == null) {
+        dst.value = '';
+      } else {
+        const result = v * factor;
+        // 四捨五入で第3位まで保持(視認性とのバランス)
+        dst.value = Number(result.toFixed(3)).toString();
+      }
+      lock = false;
+    }
+
+    $tsubo.addEventListener('input', () => syncFrom($tsubo, $m2, TSUBO_TO_M2));
+    $m2.addEventListener('input',    () => syncFrom($m2, $tsubo, 1 / TSUBO_TO_M2));
+
+    setupReset('conv', () => { /* 値は setupReset が空にする、追加処理なし */ });
+  })();
 </script>
 
 </body>

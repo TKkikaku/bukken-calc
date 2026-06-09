@@ -1333,7 +1333,94 @@
     </div>
 
   </section>
-  <section id="gunyou"   class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>軍用地</h2><p>倍率による評価額算出 (沖縄ローカル)<br>Phase 2 で実装予定</p></div></section>
+  <section id="gunyou" class="panel" role="tabpanel">
+
+    <div class="card" data-calc="gunyou">
+      <div class="card-head">
+        <h2 class="card-title">軍用地 (借地料 × 倍率)</h2>
+        <button type="button" class="btn-reset" data-reset="gunyou">リセット</button>
+      </div>
+
+      <div class="sub-tabs" data-subtabs="gunyou">
+        <button type="button" class="sub-tab active" data-subtarget="gunyou-price">価格計算</button>
+        <button type="button" class="sub-tab"        data-subtarget="gunyou-mult-panel">倍率逆算</button>
+      </div>
+
+      <!-- ===== A: 価格計算 (借地料 × 倍率) ===== -->
+      <div class="sub-panel active" id="gunyou-price">
+        <div class="field">
+          <label class="field-label" for="gunyou-rent">年間借地料</label>
+          <div class="input-row">
+            <input type="text" id="gunyou-rent" class="num-input" inputmode="decimal" autocomplete="off" placeholder="例: 1,800,000">
+            <span class="unit-label">円</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="gunyou-mult">倍率</label>
+          <div class="input-row">
+            <input type="text" id="gunyou-mult" class="num-input" inputmode="decimal" autocomplete="off" placeholder="例: 50.0">
+            <span class="unit-label">倍</span>
+          </div>
+        </div>
+
+        <div class="results">
+          <div class="result-row">
+            <span class="result-label">物件価格</span>
+            <span class="result-value result-main empty" id="gunyou-out-price">—<span class="unit">円</span></span>
+          </div>
+          <div class="result-grid">
+            <div class="result-cell">
+              <span class="result-label">物件価格 (万円)</span>
+              <span class="result-value empty" id="gunyou-out-price-man">—<span class="unit">万円</span></span>
+            </div>
+            <div class="result-cell">
+              <span class="result-label">表面利回り</span>
+              <span class="result-value empty" id="gunyou-out-yield-a">—<span class="unit">%</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== B: 倍率逆算 ===== -->
+      <div class="sub-panel" id="gunyou-mult-panel">
+        <div class="field">
+          <label class="field-label" for="gunyou-price-b">物件価格</label>
+          <div class="input-row">
+            <input type="text" id="gunyou-price-b" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+            <span class="unit-label">万円</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="gunyou-rent-b">年間借地料</label>
+          <div class="input-row">
+            <input type="text" id="gunyou-rent-b" class="num-input" inputmode="decimal" autocomplete="off" placeholder="例: 1,000,000">
+            <span class="unit-label">円</span>
+          </div>
+        </div>
+
+        <div class="results">
+          <div class="result-row">
+            <span class="result-label">倍率</span>
+            <span class="result-value result-main empty" id="gunyou-out-mult">—<span class="unit">倍</span></span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">表面利回り</span>
+            <span class="result-value result-sub empty" id="gunyou-out-yield-b">—<span class="unit">%</span></span>
+          </div>
+        </div>
+      </div>
+
+      <p class="hint">
+        ※ 軍用地の価格は「年間借地料 × 倍率」で算出されます。倍率は施設・場所・返還見込みなどにより変動します。<br>
+        ※ 主要施設の倍率は概ね30〜55倍の範囲ですが、市場により変動するため目安です。<br>
+        ※ 借地料は防衛施設局と沖縄県軍用地主連合会の交渉により毎年見直されます。<br>
+        ※ 実際の取引価格は仲介相場・需給により上下します。
+      </p>
+    </div>
+
+  </section>
 </main>
 
 <footer>
@@ -2378,6 +2465,71 @@
       $shihou.value    = '100000';
       $other.value     = '0';
       recalc();
+    });
+  })();
+
+  /* =========================================================
+   * 軍用地 (沖縄特有: 年間借地料 × 倍率)
+   *   A: 価格計算   物件価格 = 借地料 × 倍率、表面利回り = 100 / 倍率
+   *   B: 倍率逆算   倍率     = 物件価格(円) / 借地料、利回り = 借地料 / 価格 × 100
+   * ========================================================= */
+  (() => {
+    setupSubTabs('gunyou');
+
+    // ----- A: 価格計算 -----
+    const $aRent       = document.getElementById('gunyou-rent');
+    const $aMult       = document.getElementById('gunyou-mult');
+    const $aOutPrice   = document.getElementById('gunyou-out-price');
+    const $aOutPriceMan= document.getElementById('gunyou-out-price-man');
+    const $aOutYield   = document.getElementById('gunyou-out-yield-a');
+
+    function recalcA() {
+      const rent = parseNum($aRent.value);
+      const mult = parseNum($aMult.value);
+
+      if (rent == null || mult == null || rent <= 0 || mult <= 0) {
+        setResult($aOutPrice,    null, 0);
+        setResult($aOutPriceMan, null, 2);
+        setResult($aOutYield,    null, 2);
+        return;
+      }
+      const price    = rent * mult;
+      const priceMan = price / 10000;
+      const yieldPct = 100 / mult;
+      setResult($aOutPrice,    Math.floor(price), 0);
+      setResult($aOutPriceMan, priceMan,          2);
+      setResult($aOutYield,    yieldPct,          2);
+    }
+
+    [$aRent, $aMult].forEach(el => el.addEventListener('input', recalcA));
+
+    // ----- B: 倍率逆算 -----
+    const $bPrice    = document.getElementById('gunyou-price-b');
+    const $bRent     = document.getElementById('gunyou-rent-b');
+    const $bOutMult  = document.getElementById('gunyou-out-mult');
+    const $bOutYield = document.getElementById('gunyou-out-yield-b');
+
+    function recalcB() {
+      const priceMan = parseNum($bPrice.value);
+      const rent     = parseNum($bRent.value);
+
+      if (priceMan == null || rent == null || priceMan <= 0 || rent <= 0) {
+        setResult($bOutMult,  null, 2);
+        setResult($bOutYield, null, 2);
+        return;
+      }
+      const priceYen = priceMan * 10000;
+      const mult     = priceYen / rent;
+      const yieldPct = rent / priceYen * 100;
+      setResult($bOutMult,  mult,     2);
+      setResult($bOutYield, yieldPct, 2);
+    }
+
+    [$bPrice, $bRent].forEach(el => el.addEventListener('input', recalcB));
+
+    setupReset('gunyou', () => {
+      recalcA();
+      recalcB();
     });
   })();
 </script>

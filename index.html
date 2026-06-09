@@ -683,6 +683,22 @@
         </label>
       </div>
 
+      <div class="field">
+        <label class="check-row" for="chukai-taxable">
+          <input type="checkbox" id="chukai-taxable">
+          <span>売主が課税事業者(建物に消費税含む)<small>※法人・宅建業者等の売主の場合</small></span>
+        </label>
+      </div>
+
+      <div class="field" id="chukai-building-row" hidden>
+        <label class="field-label" for="chukai-building">うち建物部分の税込価格</label>
+        <div class="input-row">
+          <input type="text" id="chukai-building" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+          <span class="unit-label">万円</span>
+        </div>
+        <p class="hint">※ 物件価格のうち、建物に該当する部分(税込)。土地分は除く</p>
+      </div>
+
       <div class="results">
         <div class="result-row">
           <span class="result-label">税抜手数料</span>
@@ -700,10 +716,13 @@
 
       <p class="result-note empty" id="chukai-method">—</p>
       <p class="hint hint-warn" id="chukai-warn" hidden>特例は800万円以下の物件のみ適用可能</p>
+      <p class="hint hint-warn" id="chukai-warn-building" hidden>建物価格が物件価格を上回っています(入力値を確認してください)</p>
 
       <p class="hint">
         ※ これは宅建業法上の法定上限額です。実際の手数料は契約により異なります。<br>
-        ※ 特例適用には依頼者との事前合意が必要です。
+        ※ 特例適用には依頼者との事前合意が必要です。<br>
+        ※ 売主が課税事業者(法人・宅建業者等)の場合、建物分には消費税が含まれます。この場合、仲介手数料の計算基準は税抜き売買代金になるため、上記チェックを入れて建物の税込価格を入力してください。<br>
+        ※ 個人間取引(中古住宅の個人売主など)では建物も非課税のため、チェック不要です。
       </p>
     </div>
 
@@ -1671,53 +1690,85 @@
    *   消費税 10% を加えて税込額を算出
    * ========================================================= */
   (() => {
-    const $price   = document.getElementById('chukai-price');
-    const $special = document.getElementById('chukai-special');
-    const $outNet   = document.getElementById('chukai-out-net');
-    const $outTax   = document.getElementById('chukai-out-tax');
-    const $outTotal = document.getElementById('chukai-out-total');
-    const $method   = document.getElementById('chukai-method');
-    const $warn     = document.getElementById('chukai-warn');
+    const $price        = document.getElementById('chukai-price');
+    const $special      = document.getElementById('chukai-special');
+    const $taxable      = document.getElementById('chukai-taxable');
+    const $building     = document.getElementById('chukai-building');
+    const $buildingRow  = document.getElementById('chukai-building-row');
+    const $outNet       = document.getElementById('chukai-out-net');
+    const $outTax       = document.getElementById('chukai-out-tax');
+    const $outTotal     = document.getElementById('chukai-out-total');
+    const $method       = document.getElementById('chukai-method');
+    const $warn         = document.getElementById('chukai-warn');
+    const $warnBuilding = document.getElementById('chukai-warn-building');
 
-    const TAX_RATE         = 0.10;
-    const SPECIAL_CAP_MAN  = 30;   // 特例上限 30万円(税抜)
-    const SPECIAL_LIMIT_MAN = 800; // 特例適用可能な価格上限
+    const TAX_RATE          = 0.10;
+    const SPECIAL_CAP_MAN   = 30;   // 特例上限 30万円(税抜)
+    const SPECIAL_LIMIT_MAN = 800;  // 特例適用可能な価格上限
+    const CONSUMPTION_RATE  = 1.10; // 建物消費税10%
 
     // 速算式の計算結果を「万円(税抜)」で返す
-    function legalFeeMan(priceMan) {
-      if (priceMan <= 200) return priceMan * 0.05;
-      if (priceMan <= 400) return priceMan * 0.04 + 2;
-      return priceMan * 0.03 + 6;
+    function legalFeeMan(baseMan) {
+      if (baseMan <= 200) return baseMan * 0.05;
+      if (baseMan <= 400) return baseMan * 0.04 + 2;
+      return baseMan * 0.03 + 6;
     }
 
-    function methodLabel(priceMan) {
-      if (priceMan <= 200) return '速算式: 200万円以下 (価格 × 5%)';
-      if (priceMan <= 400) return '速算式: 200万円超〜400万円以下 (価格 × 4% + 2万円)';
-      return '速算式: 400万円超 (価格 × 3% + 6万円)';
+    function methodLabel(baseMan) {
+      if (baseMan <= 200) return '速算式: 200万円以下 (基準額 × 5%)';
+      if (baseMan <= 400) return '速算式: 200万円超〜400万円以下 (基準額 × 4% + 2万円)';
+      return '速算式: 400万円超 (基準額 × 3% + 6万円)';
+    }
+
+    function fmtMan(v) {
+      return Number(v.toFixed(2)).toLocaleString('ja-JP');
     }
 
     function recalc() {
-      const priceMan = parseNum($price.value);
-      const special  = $special.checked;
+      const priceMan    = parseNum($price.value);
+      const special     = $special.checked;
+      const taxable     = $taxable.checked;
+      const buildingMan = parseNum($building.value);
+
+      // 課税事業者CBに連動した入力欄の表示
+      $buildingRow.hidden = !taxable;
 
       if (priceMan == null || priceMan <= 0) {
         setResult($outNet,   null, 0);
         setResult($outTax,   null, 0);
         setResult($outTotal, null, 0);
-        $method.textContent = '—';
+        $method.innerHTML = '—';
         $method.classList.add('empty');
         $warn.hidden = true;
+        $warnBuilding.hidden = true;
         return;
       }
 
-      let netMan, label, warn = false;
+      // 課税事業者ON時は建物分を税抜換算して基準額を再計算
+      let baseMan = priceMan;
+      let conversionLines = [];
+      let warnBuilding = false;
+      if (taxable && buildingMan != null && buildingMan > 0) {
+        const buildingNetMan = buildingMan / CONSUMPTION_RATE;
+        baseMan = priceMan - buildingMan + buildingNetMan;
+        conversionLines.push(`税抜換算: 建物 ${fmtMan(buildingMan)}万 → ${fmtMan(buildingNetMan)}万`);
+        if (buildingMan > priceMan) warnBuilding = true;
+      }
+      $warnBuilding.hidden = !warnBuilding;
+
+      // 特例は物件価格(税抜換算前)で判定。適用時は30万円固定。
+      let netMan, lines = [], warnSpecial = false;
       if (special && priceMan <= SPECIAL_LIMIT_MAN) {
         netMan = SPECIAL_CAP_MAN;
-        label  = '特例: 低廉な空家等の上限額 30万円(税抜)';
+        lines.push('特例: 低廉な空家等の上限額 30万円(税抜)');
       } else {
-        netMan = legalFeeMan(priceMan);
-        label  = methodLabel(priceMan);
-        if (special && priceMan > SPECIAL_LIMIT_MAN) warn = true;
+        netMan = legalFeeMan(baseMan);
+        lines.push(methodLabel(baseMan));
+        if (taxable && buildingMan != null && buildingMan > 0) {
+          lines.push(`計算基準: ${fmtMan(baseMan)}万円(税抜換算後)`);
+          lines.push(...conversionLines);
+        }
+        if (special && priceMan > SPECIAL_LIMIT_MAN) warnSpecial = true;
       }
 
       const netYen   = netMan * 10000;
@@ -1727,17 +1778,21 @@
       setResult($outNet,   netYen,   0);
       setResult($outTax,   taxYen,   0);
       setResult($outTotal, totalYen, 0);
-      $method.textContent = label;
+      $method.innerHTML = lines.join('<br>');
       $method.classList.remove('empty');
-      $warn.hidden = !warn;
+      $warn.hidden = !warnSpecial;
     }
 
     setupReset('chukai', () => {
       $special.checked = false;
+      $taxable.checked = false;
+      $buildingRow.hidden = true;
       recalc();
     });
     $price.addEventListener('input', recalc);
     $special.addEventListener('change', recalc);
+    $taxable.addEventListener('change', recalc);
+    $building.addEventListener('input', recalc);
   })();
 
   /* =========================================================

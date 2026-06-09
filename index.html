@@ -1263,6 +1263,22 @@
       </div>
 
       <div class="field">
+        <label class="check-row" for="shohiyou-taxable">
+          <input type="checkbox" id="shohiyou-taxable">
+          <span>売主が課税事業者(建物に消費税含む)<small>※法人・宅建業者等の売主の場合・仲介手数料の計算に影響</small></span>
+        </label>
+      </div>
+
+      <div class="field" id="shohiyou-buildingtax-row" hidden>
+        <label class="field-label" for="shohiyou-buildingtax">うち建物部分の税込価格</label>
+        <div class="input-row">
+          <input type="text" id="shohiyou-buildingtax" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+          <span class="unit-label">万円</span>
+        </div>
+        <p class="hint">※ 物件価格のうち、建物に該当する部分(税込)</p>
+      </div>
+
+      <div class="field">
         <label class="field-label" for="shohiyou-land">土地 固定資産税評価額</label>
         <div class="input-row">
           <input type="text" id="shohiyou-land" class="num-input" inputmode="decimal" autocomplete="off" placeholder="未入力なら 物件価格×70% で概算">
@@ -1304,7 +1320,7 @@
 
       <div class="results">
         <div class="result-row">
-          <span class="result-label">仲介手数料 (税込)</span>
+          <span class="result-label">仲介手数料 (税込)<small id="shohiyou-chukai-note" hidden style="display:block;font-size:10px;color:var(--gold);margin-top:2px;">※税抜換算で計算</small></span>
           <span class="result-value result-sub empty" id="shohiyou-out-chukai">—<span class="unit">円</span></span>
         </div>
         <div class="result-row">
@@ -1337,6 +1353,8 @@
           <span class="result-value result-sub empty" id="shohiyou-out-rate">—<span class="unit">%</span></span>
         </div>
       </div>
+
+      <p class="hint hint-warn" id="shohiyou-warn-building" hidden>建物価格が物件価格を上回っています(入力値を確認してください)</p>
 
       <p class="hint" style="background: rgba(201,168,76,0.06); border: 1px solid rgba(201,168,76,0.2); padding: 8px 10px; border-radius: 4px; color: var(--gold);">
         <b>参考</b>: 別途、購入後に <b>不動産取得税</b>(土地・建物の評価額に応じて課税)が通知されます。詳細は「不動産取得税」タブで試算してください。
@@ -1548,13 +1566,21 @@
    * ========================================================= */
 
   // 仲介手数料 (税込円) — 速算式 + 消費税10%。special=true で800万以下に上限30万円
-  function calcChukaiTaxIncluded(priceMan, special = false) {
+  // buildingMan に建物部分の税込価格(万円)を渡すと、課税事業者売主ケースとして
+  // 計算基準額を「税抜換算後の金額」で算出する (null/0/未指定なら従来通り)
+  function calcChukaiTaxIncluded(priceMan, special = false, buildingMan = null) {
     if (priceMan == null || priceMan <= 0) return 0;
+    // 速算式の基準額: 課税事業者ON & 建物価格指定時のみ税抜換算
+    let baseMan = priceMan;
+    if (buildingMan != null && buildingMan > 0) {
+      baseMan = priceMan - buildingMan + buildingMan / 1.10;
+    }
     let netMan;
-    if (special && priceMan <= 800) netMan = 30;
-    else if (priceMan <= 200) netMan = priceMan * 0.05;
-    else if (priceMan <= 400) netMan = priceMan * 0.04 + 2;
-    else                       netMan = priceMan * 0.03 + 6;
+    // 特例は物件価格(税抜換算前)で判定。適用時は30万円固定で基準額の影響を受けない
+    if (special && priceMan <= 800)        netMan = 30;
+    else if (baseMan <= 200)               netMan = baseMan * 0.05;
+    else if (baseMan <= 400)               netMan = baseMan * 0.04 + 2;
+    else                                   netMan = baseMan * 0.03 + 6;
     return Math.floor(netMan * 10000 * 1.10);
   }
 
@@ -2444,47 +2470,60 @@
    *   借入額0または空欄: 抵当権設定行は非表示
    * ========================================================= */
   (() => {
-    const $price    = document.getElementById('shohiyou-price');
-    const $loan     = document.getElementById('shohiyou-loan');
-    const $land     = document.getElementById('shohiyou-land');
-    const $building = document.getElementById('shohiyou-building');
-    const $reduced  = document.getElementById('shohiyou-reduced');
-    const $shihou   = document.getElementById('shohiyou-shihou');
-    const $other    = document.getElementById('shohiyou-other');
+    const $price        = document.getElementById('shohiyou-price');
+    const $loan         = document.getElementById('shohiyou-loan');
+    const $taxable      = document.getElementById('shohiyou-taxable');
+    const $buildingTax  = document.getElementById('shohiyou-buildingtax');
+    const $buildingTaxRow = document.getElementById('shohiyou-buildingtax-row');
+    const $land         = document.getElementById('shohiyou-land');
+    const $building     = document.getElementById('shohiyou-building');
+    const $reduced      = document.getElementById('shohiyou-reduced');
+    const $shihou       = document.getElementById('shohiyou-shihou');
+    const $other        = document.getElementById('shohiyou-other');
 
-    const $outChukai  = document.getElementById('shohiyou-out-chukai');
-    const $outInshi   = document.getElementById('shohiyou-out-inshi');
-    const $outTr      = document.getElementById('shohiyou-out-tr');
-    const $outMort    = document.getElementById('shohiyou-out-mort');
-    const $outMortRow = document.getElementById('shohiyou-out-mort-row');
-    const $outShihou  = document.getElementById('shohiyou-out-shihou');
-    const $outOther   = document.getElementById('shohiyou-out-other');
-    const $outTotal   = document.getElementById('shohiyou-out-total');
-    const $outRate    = document.getElementById('shohiyou-out-rate');
+    const $outChukai     = document.getElementById('shohiyou-out-chukai');
+    const $chukaiNote    = document.getElementById('shohiyou-chukai-note');
+    const $outInshi      = document.getElementById('shohiyou-out-inshi');
+    const $outTr         = document.getElementById('shohiyou-out-tr');
+    const $outMort       = document.getElementById('shohiyou-out-mort');
+    const $outMortRow    = document.getElementById('shohiyou-out-mort-row');
+    const $outShihou     = document.getElementById('shohiyou-out-shihou');
+    const $outOther      = document.getElementById('shohiyou-out-other');
+    const $outTotal      = document.getElementById('shohiyou-out-total');
+    const $outRate       = document.getElementById('shohiyou-out-rate');
+    const $warnBuilding  = document.getElementById('shohiyou-warn-building');
 
     function clearAll() {
       [$outChukai, $outInshi, $outTr, $outMort, $outShihou, $outOther, $outTotal]
         .forEach(el => setResult(el, null, 0));
       setResult($outRate, null, 2);
       $outMortRow.hidden = true;
+      $chukaiNote.hidden = true;
+      $warnBuilding.hidden = true;
     }
 
     function recalc() {
       const priceMan = parseNum($price.value);
+
+      // 課税事業者CBに連動した建物税込価格欄の表示
+      $buildingTaxRow.hidden = !$taxable.checked;
+
       if (priceMan == null) {
         clearAll();
         return;
       }
 
-      const loanMan     = parseNum($loan.value) ?? 0;
-      const reduced     = $reduced.checked;
-      const shihouYen   = parseNum($shihou.value) ?? 0;
-      const otherYen    = parseNum($other.value)  ?? 0;
+      const loanMan          = parseNum($loan.value) ?? 0;
+      const reduced          = $reduced.checked;
+      const shihouYen        = parseNum($shihou.value) ?? 0;
+      const otherYen         = parseNum($other.value)  ?? 0;
       // 未入力時の概算: 土地=価格×70%、建物=0
-      const landMan     = parseNum($land.value)     ?? priceMan * 0.7;
-      const buildingMan = parseNum($building.value) ?? 0;
+      const landMan          = parseNum($land.value)     ?? priceMan * 0.7;
+      const buildingMan      = parseNum($building.value) ?? 0;
+      // 課税事業者ON時のみ建物税込価格を共通関数に渡す
+      const buildingTaxedMan = $taxable.checked ? parseNum($buildingTax.value) : null;
 
-      const chukai = calcChukaiTaxIncluded(priceMan, false);
+      const chukai = calcChukaiTaxIncluded(priceMan, false, buildingTaxedMan);
       const inshi  = calcInshiGenyuYen(priceMan);
       const trans  = calcTourokuTransYen(landMan, buildingMan, reduced);
       const mort   = calcTourokuMortYen(loanMan, reduced);
@@ -2494,6 +2533,12 @@
       setResult($outTr,     trans,     0);
       setResult($outShihou, shihouYen, 0);
       setResult($outOther,  otherYen,  0);
+
+      // 仲介手数料の補足表示 (課税事業者ON & 建物価格指定時のみ)
+      $chukaiNote.hidden = !($taxable.checked && buildingTaxedMan != null && buildingTaxedMan > 0);
+
+      // 建物税込価格 > 物件価格 の警告
+      $warnBuilding.hidden = !($taxable.checked && buildingTaxedMan != null && buildingTaxedMan > priceMan);
 
       if (loanMan > 0) {
         $outMortRow.hidden = false;
@@ -2512,13 +2557,15 @@
       }
     }
 
-    [$price, $loan, $land, $building, $shihou, $other].forEach(el => el.addEventListener('input', recalc));
-    $reduced.addEventListener('change', recalc);
+    [$price, $loan, $land, $building, $buildingTax, $shihou, $other].forEach(el => el.addEventListener('input', recalc));
+    [$reduced, $taxable].forEach(el => el.addEventListener('change', recalc));
 
     setupReset('shohiyou', () => {
-      $reduced.checked = false;
-      $shihou.value    = '100000';
-      $other.value     = '0';
+      $reduced.checked        = false;
+      $taxable.checked        = false;
+      $buildingTaxRow.hidden  = true;
+      $shihou.value           = '100000';
+      $other.value            = '0';
       recalc();
     });
   })();

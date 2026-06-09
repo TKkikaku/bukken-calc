@@ -309,6 +309,43 @@
     border-color: var(--gold);
     background: rgba(201, 168, 76, 0.08);
   }
+  .check-row small {
+    display: block;
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 2px;
+    letter-spacing: 0.02em;
+  }
+
+  /* ===== サブタブ (タブ内のA/B切替。譲渡所得税の短期/長期等でも使用) ===== */
+  .sub-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: var(--navy);
+    border: 1px solid var(--navy-3);
+    border-radius: 8px;
+    margin-bottom: 14px;
+  }
+  .sub-tab {
+    flex: 1;
+    background: transparent;
+    border: 0;
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 13px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .sub-tab.active {
+    background: var(--gold);
+    color: var(--navy);
+    font-weight: 700;
+  }
+  .sub-panel { display: none; }
+  .sub-panel.active { display: block; }
 
   /* 結果のサイズ階層 (Sub=補足, Main=強調) */
   .result-value.result-sub  { font-size: 15px; }
@@ -588,7 +625,104 @@
     </div>
 
   </section>
-  <section id="touroku"  class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>登録免許税</h2><p>所有権移転・抵当権設定<br>Phase 2 で実装予定</p></div></section>
+  <section id="touroku" class="panel" role="tabpanel">
+
+    <div class="card" data-calc="touroku">
+      <div class="card-head">
+        <h2 class="card-title">登録免許税</h2>
+        <button type="button" class="btn-reset" data-reset="touroku">リセット</button>
+      </div>
+
+      <div class="sub-tabs" data-subtabs="touroku">
+        <button type="button" class="sub-tab active" data-subtarget="touroku-trans">所有権移転 (売買)</button>
+        <button type="button" class="sub-tab"        data-subtarget="touroku-mort">抵当権設定</button>
+      </div>
+
+      <!-- ===== A: 所有権移転 ===== -->
+      <div class="sub-panel active" id="touroku-trans">
+        <div class="field">
+          <label class="field-label" for="touroku-land">土地 固定資産税評価額</label>
+          <div class="input-row">
+            <input type="text" id="touroku-land" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+            <span class="unit-label">万円</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="touroku-building">建物 固定資産税評価額</label>
+          <div class="input-row">
+            <input type="text" id="touroku-building" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+            <span class="unit-label">万円</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="check-row" for="touroku-land-red">
+            <input type="checkbox" id="touroku-land-red" checked>
+            <span>土地の軽減税率 (1.5%) を適用<small>※2029/3/31まで</small></span>
+          </label>
+        </div>
+
+        <div class="field">
+          <label class="check-row" for="touroku-build-red">
+            <input type="checkbox" id="touroku-build-red">
+            <span>住宅用家屋の軽減税率 (0.3%) を建物に適用<small>※2027/3/31まで・要件あり</small></span>
+          </label>
+        </div>
+
+        <div class="results">
+          <div class="result-row">
+            <span class="result-label">土地分</span>
+            <span class="result-value result-sub empty" id="touroku-out-land">—<span class="unit">円</span></span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">建物分</span>
+            <span class="result-value result-sub empty" id="touroku-out-building">—<span class="unit">円</span></span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">合計</span>
+            <span class="result-value result-main empty" id="touroku-out-total">—<span class="unit">円</span></span>
+          </div>
+        </div>
+
+        <p class="result-note empty" id="touroku-trans-note">—</p>
+      </div>
+
+      <!-- ===== B: 抵当権設定 ===== -->
+      <div class="sub-panel" id="touroku-mort">
+        <div class="field">
+          <label class="field-label" for="touroku-loan">債権額 (借入額)</label>
+          <div class="input-row">
+            <input type="text" id="touroku-loan" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+            <span class="unit-label">万円</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="check-row" for="touroku-mort-red">
+            <input type="checkbox" id="touroku-mort-red">
+            <span>住宅用家屋の軽減税率 (0.1%) を適用<small>※2027/3/31まで・要件あり</small></span>
+          </label>
+        </div>
+
+        <div class="results">
+          <div class="result-row">
+            <span class="result-label">税額</span>
+            <span class="result-value result-main empty" id="touroku-out-mort">—<span class="unit">円</span></span>
+          </div>
+        </div>
+
+        <p class="result-note empty" id="touroku-mort-note">—</p>
+      </div>
+
+      <p class="hint">
+        ※ 課税標準は固定資産税評価額(売買価格ではない)です。<br>
+        ※ 住宅用家屋の軽減を受けるには「住宅用家屋証明書」など要件があります(自己居住・床面積50㎡以上等)。<br>
+        ※ 土地軽減は2029年3月31日まで、住宅用家屋軽減は2027年3月31日までの適用期限です。
+      </p>
+    </div>
+
+  </section>
   <section id="shutoku"  class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>不動産取得税</h2><p>標準税率・軽減措置<br>Phase 2 で実装予定</p></div></section>
   <section id="joutou"   class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>譲渡所得税</h2><p>短期・長期、3000万特別控除等<br>Phase 2 で実装予定</p></div></section>
   <section id="loan"     class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>住宅ローン</h2><p>元利均等、毎月返済額・総支払額<br>Phase 2 で実装予定</p></div></section>
@@ -675,6 +809,26 @@
       card.querySelectorAll('input.num-input').forEach(i => { i.value = ''; });
       recalc();
     });
+  }
+
+  // サブタブ切替: data-subtabs="<group>" 内の .sub-tab[data-subtarget] を排他切替
+  // 同カード内の .sub-panel#<subtarget> を表示
+  function setupSubTabs(group) {
+    const wrap = document.querySelector(`[data-subtabs="${group}"]`);
+    if (!wrap) return;
+    const card = wrap.closest('.card');
+    wrap.addEventListener('click', e => {
+      const btn = e.target.closest('.sub-tab');
+      if (!btn) return;
+      const target = btn.dataset.subtarget;
+      wrap.querySelectorAll('.sub-tab').forEach(t => t.classList.toggle('active', t === btn));
+      card.querySelectorAll('.sub-panel').forEach(p => p.classList.toggle('active', p.id === target));
+    });
+  }
+
+  // 100円未満切り捨て (国税通則法 119条1項)
+  function floor100(yen) {
+    return Math.floor(yen / 100) * 100;
   }
 
   /* =========================================================
@@ -900,6 +1054,100 @@
 
     setupReset('inshi', recalc);
     $price.addEventListener('input', recalc);
+  })();
+
+  /* =========================================================
+   * 登録免許税
+   *   A: 所有権移転 (土地/建物それぞれ 通常2.0% / 軽減 1.5% (土地) ・ 0.3% (建物))
+   *   B: 抵当権設定 (通常0.4% / 軽減 0.1%)
+   *   端数: 各税額を100円未満切り捨て
+   *   入力: 万円 / 出力: 円
+   * ========================================================= */
+  (() => {
+    setupSubTabs('touroku');
+
+    const RATES = {
+      land:  { normal: 0.020, reduced: 0.015 },
+      build: { normal: 0.020, reduced: 0.003 },
+      mort:  { normal: 0.004, reduced: 0.001 },
+    };
+
+    const pct = r => (r * 100).toFixed(1) + '%';
+
+    // ----- A: 所有権移転 -----
+    const $aLand     = document.getElementById('touroku-land');
+    const $aBuilding = document.getElementById('touroku-building');
+    const $aLandRed  = document.getElementById('touroku-land-red');
+    const $aBuildRed = document.getElementById('touroku-build-red');
+    const $aOutLand  = document.getElementById('touroku-out-land');
+    const $aOutBuild = document.getElementById('touroku-out-building');
+    const $aOutTotal = document.getElementById('touroku-out-total');
+    const $aNote     = document.getElementById('touroku-trans-note');
+
+    function recalcA() {
+      const landMan  = parseNum($aLand.value);
+      const buildMan = parseNum($aBuilding.value);
+      const landRate  = $aLandRed.checked  ? RATES.land.reduced  : RATES.land.normal;
+      const buildRate = $aBuildRed.checked ? RATES.build.reduced : RATES.build.normal;
+
+      if (landMan == null && buildMan == null) {
+        setResult($aOutLand,  null, 0);
+        setResult($aOutBuild, null, 0);
+        setResult($aOutTotal, null, 0);
+        $aNote.textContent = '—';
+        $aNote.classList.add('empty');
+        return;
+      }
+
+      const landYen  = landMan  == null ? 0 : floor100(landMan  * 10000 * landRate);
+      const buildYen = buildMan == null ? 0 : floor100(buildMan * 10000 * buildRate);
+      const total    = landYen + buildYen;
+
+      setResult($aOutLand,  landMan  == null ? null : landYen,  0);
+      setResult($aOutBuild, buildMan == null ? null : buildYen, 0);
+      setResult($aOutTotal, total, 0);
+
+      $aNote.textContent =
+        `税率 — 土地: ${pct(landRate)}${$aLandRed.checked ? '(軽減)' : ''}` +
+        ` / 建物: ${pct(buildRate)}${$aBuildRed.checked ? '(軽減)' : ''}`;
+      $aNote.classList.remove('empty');
+    }
+
+    [$aLand, $aBuilding].forEach(el => el.addEventListener('input', recalcA));
+    [$aLandRed, $aBuildRed].forEach(el => el.addEventListener('change', recalcA));
+
+    // ----- B: 抵当権設定 -----
+    const $bLoan = document.getElementById('touroku-loan');
+    const $bRed  = document.getElementById('touroku-mort-red');
+    const $bOut  = document.getElementById('touroku-out-mort');
+    const $bNote = document.getElementById('touroku-mort-note');
+
+    function recalcB() {
+      const loanMan = parseNum($bLoan.value);
+      if (loanMan == null) {
+        setResult($bOut, null, 0);
+        $bNote.textContent = '—';
+        $bNote.classList.add('empty');
+        return;
+      }
+      const rate = $bRed.checked ? RATES.mort.reduced : RATES.mort.normal;
+      const yen  = floor100(loanMan * 10000 * rate);
+      setResult($bOut, yen, 0);
+      $bNote.textContent = `税率: ${pct(rate)}${$bRed.checked ? '(軽減)' : ''}`;
+      $bNote.classList.remove('empty');
+    }
+
+    $bLoan.addEventListener('input', recalcB);
+    $bRed.addEventListener('change', recalcB);
+
+    // ----- リセット (両パネルともデフォルトCB状態に戻す) -----
+    setupReset('touroku', () => {
+      $aLandRed.checked  = true;
+      $aBuildRed.checked = false;
+      $bRed.checked      = false;
+      recalcA();
+      recalcB();
+    });
   })();
 </script>
 

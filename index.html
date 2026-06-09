@@ -273,6 +273,64 @@
     color: var(--text-dim);
     line-height: 1.5;
   }
+  .hint-warn {
+    color: #f3c9bd;
+    background: rgba(224, 122, 95, 0.12);
+    border: 1px solid rgba(224, 122, 95, 0.35);
+    padding: 6px 10px;
+    border-radius: 4px;
+  }
+
+  /* チェックボックス行 (タップ領域広め) */
+  .check-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--navy);
+    border: 1px solid var(--navy-3);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--text);
+    user-select: none;
+    transition: all 0.15s ease;
+  }
+  .check-row input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--gold);
+    cursor: pointer;
+    flex: 0 0 auto;
+    margin: 0;
+  }
+  .check-row:has(input:checked) {
+    border-color: var(--gold);
+    background: rgba(201, 168, 76, 0.08);
+  }
+
+  /* 結果のサイズ階層 (Sub=補足, Main=強調) */
+  .result-value.result-sub  { font-size: 15px; }
+  .result-value.result-main { font-size: 26px; font-weight: 700; }
+  .result-value.result-main .unit { font-size: 12px; }
+
+  .result-note {
+    margin: 10px 0 0;
+    padding: 6px 10px;
+    font-size: 11px;
+    color: var(--gold);
+    background: rgba(201, 168, 76, 0.06);
+    border-radius: 4px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.02em;
+  }
+  .result-note.empty {
+    color: var(--text-dim);
+    background: transparent;
+    padding-left: 0;
+    padding-right: 0;
+  }
 
   /* ===== Placeholder (未実装タブ用、Phase 1 から流用) ===== */
   .placeholder {
@@ -443,7 +501,55 @@
     </div>
 
   </section>
-  <section id="chukai"   class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>仲介手数料</h2><p>宅建業法に基づく速算式<br>Phase 2 で実装予定</p></div></section>
+  <section id="chukai" class="panel" role="tabpanel">
+
+    <!-- ===== 仲介手数料 (宅建業法上の法定上限額) ===== -->
+    <div class="card" data-calc="chukai">
+      <div class="card-head">
+        <h2 class="card-title">仲介手数料 (法定上限)</h2>
+        <button type="button" class="btn-reset" data-reset="chukai">リセット</button>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="chukai-price">物件価格</label>
+        <div class="input-row">
+          <input type="text" id="chukai-price" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+          <span class="unit-label">万円</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="check-row" for="chukai-special">
+          <input type="checkbox" id="chukai-special">
+          <span>低廉な空家等の特例(800万円以下)を適用</span>
+        </label>
+      </div>
+
+      <div class="results">
+        <div class="result-row">
+          <span class="result-label">税抜手数料</span>
+          <span class="result-value result-sub empty" id="chukai-out-net">—<span class="unit">円</span></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">消費税 (10%)</span>
+          <span class="result-value result-sub empty" id="chukai-out-tax">—<span class="unit">円</span></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">税込手数料</span>
+          <span class="result-value result-main empty" id="chukai-out-total">—<span class="unit">円</span></span>
+        </div>
+      </div>
+
+      <p class="result-note empty" id="chukai-method">—</p>
+      <p class="hint hint-warn" id="chukai-warn" hidden>特例は800万円以下の物件のみ適用可能</p>
+
+      <p class="hint">
+        ※ これは宅建業法上の法定上限額です。実際の手数料は契約により異なります。<br>
+        ※ 特例適用には依頼者との事前合意が必要です。
+      </p>
+    </div>
+
+  </section>
   <section id="inshi"    class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>印紙税</h2><p>不動産売買契約書 (軽減税率対応)<br>Phase 2 で実装予定</p></div></section>
   <section id="touroku"  class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>登録免許税</h2><p>所有権移転・抵当権設定<br>Phase 2 で実装予定</p></div></section>
   <section id="shutoku"  class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>不動産取得税</h2><p>標準税率・軽減措置<br>Phase 2 で実装予定</p></div></section>
@@ -616,6 +722,86 @@
     $m2.addEventListener('input',    () => syncFrom($m2, $tsubo, 1 / TSUBO_TO_M2));
 
     setupReset('conv', () => { /* 値は setupReset が空にする、追加処理なし */ });
+  })();
+
+  /* =========================================================
+   * 仲介手数料 (宅建業法 速算式 + 低廉な空家等の特例)
+   *   入力: 万円 / 出力: 円
+   *   速算式 (税抜):
+   *     200万円以下:  価格 × 5%
+   *     200〜400万円: 価格 × 4% + 2万円
+   *     400万円超:    価格 × 3% + 6万円
+   *   特例 (800万円以下の物件): 30万円 (税抜) を上限とする
+   *   消費税 10% を加えて税込額を算出
+   * ========================================================= */
+  (() => {
+    const $price   = document.getElementById('chukai-price');
+    const $special = document.getElementById('chukai-special');
+    const $outNet   = document.getElementById('chukai-out-net');
+    const $outTax   = document.getElementById('chukai-out-tax');
+    const $outTotal = document.getElementById('chukai-out-total');
+    const $method   = document.getElementById('chukai-method');
+    const $warn     = document.getElementById('chukai-warn');
+
+    const TAX_RATE         = 0.10;
+    const SPECIAL_CAP_MAN  = 30;   // 特例上限 30万円(税抜)
+    const SPECIAL_LIMIT_MAN = 800; // 特例適用可能な価格上限
+
+    // 速算式の計算結果を「万円(税抜)」で返す
+    function legalFeeMan(priceMan) {
+      if (priceMan <= 200) return priceMan * 0.05;
+      if (priceMan <= 400) return priceMan * 0.04 + 2;
+      return priceMan * 0.03 + 6;
+    }
+
+    function methodLabel(priceMan) {
+      if (priceMan <= 200) return '速算式: 200万円以下 (価格 × 5%)';
+      if (priceMan <= 400) return '速算式: 200万円超〜400万円以下 (価格 × 4% + 2万円)';
+      return '速算式: 400万円超 (価格 × 3% + 6万円)';
+    }
+
+    function recalc() {
+      const priceMan = parseNum($price.value);
+      const special  = $special.checked;
+
+      if (priceMan == null || priceMan <= 0) {
+        setResult($outNet,   null, 0);
+        setResult($outTax,   null, 0);
+        setResult($outTotal, null, 0);
+        $method.textContent = '—';
+        $method.classList.add('empty');
+        $warn.hidden = true;
+        return;
+      }
+
+      let netMan, label, warn = false;
+      if (special && priceMan <= SPECIAL_LIMIT_MAN) {
+        netMan = SPECIAL_CAP_MAN;
+        label  = '特例: 低廉な空家等の上限額 30万円(税抜)';
+      } else {
+        netMan = legalFeeMan(priceMan);
+        label  = methodLabel(priceMan);
+        if (special && priceMan > SPECIAL_LIMIT_MAN) warn = true;
+      }
+
+      const netYen   = netMan * 10000;
+      const taxYen   = netYen * TAX_RATE;
+      const totalYen = netYen + taxYen;
+
+      setResult($outNet,   netYen,   0);
+      setResult($outTax,   taxYen,   0);
+      setResult($outTotal, totalYen, 0);
+      $method.textContent = label;
+      $method.classList.remove('empty');
+      $warn.hidden = !warn;
+    }
+
+    setupReset('chukai', () => {
+      $special.checked = false;
+      recalc();
+    });
+    $price.addEventListener('input', recalc);
+    $special.addEventListener('change', recalc);
   })();
 </script>
 

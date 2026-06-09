@@ -458,6 +458,16 @@
   .result-cell.warn .result-value { color: var(--danger); }
   .result-cell.warn .result-value .unit { color: #f3c9bd; }
 
+  /* 合計行の上に強めの区切り (諸費用合計タブ等) */
+  .result-row.total-separator {
+    border-top: 1px solid rgba(201, 168, 76, 0.5);
+    padding-top: 12px;
+    margin-top: 8px;
+  }
+  .result-row.total-separator + .result-row {
+    border-top: none;
+  }
+
   /* 結果のサイズ階層 (Sub=補足, Main=強調) */
   .result-value.result-sub  { font-size: 15px; }
   .result-value.result-main { font-size: 26px; font-weight: 700; }
@@ -1209,7 +1219,120 @@
     </div>
 
   </section>
-  <section id="shohiyou" class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>諸費用合計</h2><p>売買時シミュレーション統合<br>Phase 2 で実装予定</p></div></section>
+  <section id="shohiyou" class="panel" role="tabpanel">
+
+    <div class="card" data-calc="shohiyou">
+      <div class="card-head">
+        <h2 class="card-title">諸費用合計 (購入時シミュレーション)</h2>
+        <button type="button" class="btn-reset" data-reset="shohiyou">リセット</button>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="shohiyou-price">物件価格</label>
+        <div class="input-row">
+          <input type="text" id="shohiyou-price" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+          <span class="unit-label">万円</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="shohiyou-loan">借入額</label>
+        <div class="input-row">
+          <input type="text" id="shohiyou-loan" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0(現金購入)">
+          <span class="unit-label">万円</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="shohiyou-land">土地 固定資産税評価額</label>
+        <div class="input-row">
+          <input type="text" id="shohiyou-land" class="num-input" inputmode="decimal" autocomplete="off" placeholder="未入力なら 物件価格×70% で概算">
+          <span class="unit-label">万円</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="shohiyou-building">建物 固定資産税評価額</label>
+        <div class="input-row">
+          <input type="text" id="shohiyou-building" class="num-input" inputmode="decimal" autocomplete="off" placeholder="未入力なら 0(土地のみ取引)">
+          <span class="unit-label">万円</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="check-row" for="shohiyou-reduced">
+          <input type="checkbox" id="shohiyou-reduced">
+          <span>住宅用家屋の軽減税率を適用<small>※建物 0.3% / 抵当権 0.1%</small></span>
+        </label>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="shohiyou-shihou">司法書士報酬</label>
+        <div class="input-row">
+          <input type="text" id="shohiyou-shihou" class="num-input" inputmode="decimal" autocomplete="off" value="100000">
+          <span class="unit-label">円</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="shohiyou-other">その他費用</label>
+        <div class="input-row">
+          <input type="text" id="shohiyou-other" class="num-input" inputmode="decimal" autocomplete="off" value="0">
+          <span class="unit-label">円</span>
+        </div>
+        <p class="hint">※ 火災保険・ローン事務手数料・保証料・引越し費用などまとめて</p>
+      </div>
+
+      <div class="results">
+        <div class="result-row">
+          <span class="result-label">仲介手数料 (税込)</span>
+          <span class="result-value result-sub empty" id="shohiyou-out-chukai">—<span class="unit">円</span></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">印紙税 (軽減)</span>
+          <span class="result-value result-sub empty" id="shohiyou-out-inshi">—<span class="unit">円</span></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">登録免許税 (所有権移転)</span>
+          <span class="result-value result-sub empty" id="shohiyou-out-tr">—<span class="unit">円</span></span>
+        </div>
+        <div class="result-row" id="shohiyou-out-mort-row" hidden>
+          <span class="result-label">登録免許税 (抵当権設定)</span>
+          <span class="result-value result-sub empty" id="shohiyou-out-mort">—<span class="unit">円</span></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">司法書士報酬</span>
+          <span class="result-value result-sub empty" id="shohiyou-out-shihou">—<span class="unit">円</span></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">その他費用</span>
+          <span class="result-value result-sub empty" id="shohiyou-out-other">—<span class="unit">円</span></span>
+        </div>
+
+        <div class="result-row total-separator">
+          <span class="result-label">諸費用合計</span>
+          <span class="result-value result-main empty" id="shohiyou-out-total">—<span class="unit">円</span></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">物件価格に対する諸費用率</span>
+          <span class="result-value result-sub empty" id="shohiyou-out-rate">—<span class="unit">%</span></span>
+        </div>
+      </div>
+
+      <p class="hint" style="background: rgba(201,168,76,0.06); border: 1px solid rgba(201,168,76,0.2); padding: 8px 10px; border-radius: 4px; color: var(--gold);">
+        <b>参考</b>: 別途、購入後に <b>不動産取得税</b>(土地・建物の評価額に応じて課税)が通知されます。詳細は「不動産取得税」タブで試算してください。
+      </p>
+
+      <p class="hint">
+        ※ これは概算です。実際の諸費用は物件・金融機関・司法書士・地域により変動します。<br>
+        ※ 固定資産税評価額が不明な場合、土地は物件価格の70%、建物は0として概算しています。<br>
+        ※ 司法書士報酬は8〜15万円程度が一般的ですが、登記内容により増減します。<br>
+        ※ 火災保険料・ローン事務手数料・保証料・引越し費用などは「その他費用」にまとめて入力してください。<br>
+        ※ 不動産取得税は購入後数ヶ月で通知されるため、別途準備が必要です。
+      </p>
+    </div>
+
+  </section>
   <section id="gunyou"   class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>軍用地</h2><p>倍率による評価額算出 (沖縄ローカル)<br>Phase 2 で実装予定</p></div></section>
 </main>
 
@@ -1311,6 +1434,59 @@
   // 100円未満切り捨て (国税通則法 119条1項)
   function floor100(yen) {
     return Math.floor(yen / 100) * 100;
+  }
+
+  /* =========================================================
+   * 共通計算関数 (各タブから参照可能)
+   *   Phase 2-⑨ 諸費用合計タブで再利用する目的で共通化
+   * ========================================================= */
+
+  // 仲介手数料 (税込円) — 速算式 + 消費税10%。special=true で800万以下に上限30万円
+  function calcChukaiTaxIncluded(priceMan, special = false) {
+    if (priceMan == null || priceMan <= 0) return 0;
+    let netMan;
+    if (special && priceMan <= 800) netMan = 30;
+    else if (priceMan <= 200) netMan = priceMan * 0.05;
+    else if (priceMan <= 400) netMan = priceMan * 0.04 + 2;
+    else                       netMan = priceMan * 0.03 + 6;
+    return Math.floor(netMan * 10000 * 1.10);
+  }
+
+  // 印紙税 (軽減税額 円) — 1万円未満は非課税で0
+  function calcInshiGenyuYen(priceMan) {
+    if (priceMan == null || priceMan < 0) return 0;
+    const yen = priceMan * 10000;
+    if (yen < 10000) return 0;
+    const brackets = [
+      [100_000,         200],
+      [500_000,         200],
+      [1_000_000,       500],
+      [5_000_000,       1_000],
+      [10_000_000,      5_000],
+      [50_000_000,      10_000],
+      [100_000_000,     30_000],
+      [500_000_000,     60_000],
+      [1_000_000_000,   160_000],
+      [5_000_000_000,   320_000],
+      [Infinity,        480_000],
+    ];
+    for (const [max, tax] of brackets) if (yen <= max) return tax;
+    return 480_000;
+  }
+
+  // 登録免許税 所有権移転 (土地:軽減1.5% 常時、建物:reducedBuilding で 0.3% / 2.0%)
+  function calcTourokuTransYen(landMan, buildingMan, reducedBuilding) {
+    const landYen  = floor100((landMan     ?? 0) * 10000 * 0.015);
+    const buildRate = reducedBuilding ? 0.003 : 0.020;
+    const buildYen = floor100((buildingMan ?? 0) * 10000 * buildRate);
+    return landYen + buildYen;
+  }
+
+  // 登録免許税 抵当権設定 (reduced で 0.1% / 0.4%)。借入0なら0
+  function calcTourokuMortYen(loanMan, reduced) {
+    if (loanMan == null || loanMan <= 0) return 0;
+    const rate = reduced ? 0.001 : 0.004;
+    return floor100(loanMan * 10000 * rate);
   }
 
   /* =========================================================
@@ -2116,6 +2292,93 @@
 
     [$price, $rent, $expense, $cost].forEach(el => el.addEventListener('input', recalc));
     setupReset('rimawari', recalc);
+  })();
+
+  /* =========================================================
+   * 諸費用合計 (購入時シミュレーション)
+   *   仲介手数料・印紙税・登録免許税(所有権移転/抵当権)を共通関数で算出
+   *   + 司法書士報酬 + その他費用
+   *   評価額未入力時: 土地=価格×70%、建物=0
+   *   借入額0または空欄: 抵当権設定行は非表示
+   * ========================================================= */
+  (() => {
+    const $price    = document.getElementById('shohiyou-price');
+    const $loan     = document.getElementById('shohiyou-loan');
+    const $land     = document.getElementById('shohiyou-land');
+    const $building = document.getElementById('shohiyou-building');
+    const $reduced  = document.getElementById('shohiyou-reduced');
+    const $shihou   = document.getElementById('shohiyou-shihou');
+    const $other    = document.getElementById('shohiyou-other');
+
+    const $outChukai  = document.getElementById('shohiyou-out-chukai');
+    const $outInshi   = document.getElementById('shohiyou-out-inshi');
+    const $outTr      = document.getElementById('shohiyou-out-tr');
+    const $outMort    = document.getElementById('shohiyou-out-mort');
+    const $outMortRow = document.getElementById('shohiyou-out-mort-row');
+    const $outShihou  = document.getElementById('shohiyou-out-shihou');
+    const $outOther   = document.getElementById('shohiyou-out-other');
+    const $outTotal   = document.getElementById('shohiyou-out-total');
+    const $outRate    = document.getElementById('shohiyou-out-rate');
+
+    function clearAll() {
+      [$outChukai, $outInshi, $outTr, $outMort, $outShihou, $outOther, $outTotal]
+        .forEach(el => setResult(el, null, 0));
+      setResult($outRate, null, 2);
+      $outMortRow.hidden = true;
+    }
+
+    function recalc() {
+      const priceMan = parseNum($price.value);
+      if (priceMan == null) {
+        clearAll();
+        return;
+      }
+
+      const loanMan     = parseNum($loan.value) ?? 0;
+      const reduced     = $reduced.checked;
+      const shihouYen   = parseNum($shihou.value) ?? 0;
+      const otherYen    = parseNum($other.value)  ?? 0;
+      // 未入力時の概算: 土地=価格×70%、建物=0
+      const landMan     = parseNum($land.value)     ?? priceMan * 0.7;
+      const buildingMan = parseNum($building.value) ?? 0;
+
+      const chukai = calcChukaiTaxIncluded(priceMan, false);
+      const inshi  = calcInshiGenyuYen(priceMan);
+      const trans  = calcTourokuTransYen(landMan, buildingMan, reduced);
+      const mort   = calcTourokuMortYen(loanMan, reduced);
+
+      setResult($outChukai, chukai,    0);
+      setResult($outInshi,  inshi,     0);
+      setResult($outTr,     trans,     0);
+      setResult($outShihou, shihouYen, 0);
+      setResult($outOther,  otherYen,  0);
+
+      if (loanMan > 0) {
+        $outMortRow.hidden = false;
+        setResult($outMort, mort, 0);
+      } else {
+        $outMortRow.hidden = true;
+      }
+
+      const total = chukai + inshi + trans + (loanMan > 0 ? mort : 0) + shihouYen + otherYen;
+      setResult($outTotal, total, 0);
+
+      if (priceMan > 0) {
+        setResult($outRate, total / (priceMan * 10000) * 100, 2);
+      } else {
+        setResult($outRate, null, 2);
+      }
+    }
+
+    [$price, $loan, $land, $building, $shihou, $other].forEach(el => el.addEventListener('input', recalc));
+    $reduced.addEventListener('change', recalc);
+
+    setupReset('shohiyou', () => {
+      $reduced.checked = false;
+      $shihou.value    = '100000';
+      $other.value     = '0';
+      recalc();
+    });
   })();
 </script>
 

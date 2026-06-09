@@ -347,6 +347,69 @@
   .sub-panel { display: none; }
   .sub-panel.active { display: block; }
 
+  /* ===== ラジオグループ (所有期間など3〜4択) ===== */
+  .radio-group {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .radio-group label {
+    flex: 1 1 0;
+    min-width: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 10px 6px;
+    background: var(--navy);
+    border: 1px solid var(--navy-3);
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--text);
+    cursor: pointer;
+    text-align: center;
+    user-select: none;
+    transition: all 0.15s ease;
+  }
+  .radio-group label:has(input:checked) {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: rgba(201, 168, 76, 0.08);
+    font-weight: 700;
+  }
+  .radio-group label small {
+    display: block;
+    font-size: 10px;
+    color: var(--text-dim);
+    font-weight: 400;
+  }
+  .radio-group label:has(input:checked) small {
+    color: var(--gold);
+  }
+  .radio-group input[type="radio"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* 無効化状態 (依存条件を満たさないチェックボックス用) */
+  .check-row.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  /* 自動計算値が入る読み取り専用入力欄 (取得費不明 → 5%概算 等) */
+  .num-input[readonly] {
+    background: rgba(201, 168, 76, 0.06);
+    border-color: rgba(201, 168, 76, 0.3);
+    color: var(--gold);
+    cursor: not-allowed;
+  }
+
   /* 結果のサイズ階層 (Sub=補足, Main=強調) */
   .result-value.result-sub  { font-size: 15px; }
   .result-value.result-main { font-size: 26px; font-weight: 700; }
@@ -795,7 +858,108 @@
     </div>
 
   </section>
-  <section id="joutou"   class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>譲渡所得税</h2><p>短期・長期、3000万特別控除等<br>Phase 2 で実装予定</p></div></section>
+  <section id="joutou" class="panel" role="tabpanel">
+
+    <div class="card" data-calc="joutou">
+      <div class="card-head">
+        <h2 class="card-title">譲渡所得税 (不動産売却)</h2>
+        <button type="button" class="btn-reset" data-reset="joutou">リセット</button>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="joutou-sale">売却価格</label>
+        <div class="input-row">
+          <input type="text" id="joutou-sale" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+          <span class="unit-label">万円</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="joutou-cost">取得費</label>
+        <div class="input-row">
+          <input type="text" id="joutou-cost" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+          <span class="unit-label">万円</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="check-row" for="joutou-cost-unknown">
+          <input type="checkbox" id="joutou-cost-unknown">
+          <span>取得費不明 → 売却額の5%で概算<small>※概算取得費の特例</small></span>
+        </label>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="joutou-expense">譲渡費用</label>
+        <div class="input-row">
+          <input type="text" id="joutou-expense" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+          <span class="unit-label">万円</span>
+        </div>
+        <p class="hint">※ 仲介手数料・印紙代・測量費・解体費など</p>
+      </div>
+
+      <div class="field">
+        <span class="field-label">所有期間</span>
+        <div class="radio-group">
+          <label><input type="radio" name="joutou-period" value="short">短期<small>5年以下</small></label>
+          <label><input type="radio" name="joutou-period" value="long" checked>長期<small>5年超</small></label>
+          <label><input type="radio" name="joutou-period" value="long10">10年超<small>軽減対象</small></label>
+        </div>
+        <p class="hint">※ 売却年の1月1日時点で判定(取得日から売却日までではない)</p>
+      </div>
+
+      <div class="field">
+        <label class="check-row" for="joutou-deduction">
+          <input type="checkbox" id="joutou-deduction">
+          <span>マイホーム3000万円特別控除を適用<small>※居住用財産の売却が対象・要件あり</small></span>
+        </label>
+      </div>
+
+      <div class="field">
+        <label class="check-row" for="joutou-long10-red" id="joutou-long10-row">
+          <input type="checkbox" id="joutou-long10-red">
+          <span>10年超所有軽減税率の特例を適用<small>※所有期間「10年超」のときのみ</small></span>
+        </label>
+      </div>
+
+      <div class="results">
+        <div class="result-row">
+          <span class="result-label">譲渡所得</span>
+          <span class="result-value result-sub empty" id="joutou-out-profit">—<span class="unit">円</span></span>
+        </div>
+        <div class="result-row" id="joutou-out-deduct-row" hidden>
+          <span class="result-label">3,000万円特別控除</span>
+          <span class="result-value result-sub empty" id="joutou-out-deduct">—<span class="unit">円</span></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">課税譲渡所得</span>
+          <span class="result-value result-sub empty" id="joutou-out-taxable">—<span class="unit">円</span></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">所得税+復興特別所得税</span>
+          <span class="result-value result-sub empty" id="joutou-out-income">—<span class="unit">円</span></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">住民税</span>
+          <span class="result-value result-sub empty" id="joutou-out-residence">—<span class="unit">円</span></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">合計税額</span>
+          <span class="result-value result-main empty" id="joutou-out-total">—<span class="unit">円</span></span>
+        </div>
+      </div>
+
+      <p class="result-note empty" id="joutou-note">—</p>
+
+      <p class="hint">
+        ※ 所有期間は売却年の1月1日時点で判定します(取得日から売却日までではない)。<br>
+        ※ 3,000万円特別控除はマイホーム(居住用財産)の売却が対象で、別途要件があります。<br>
+        ※ 取得費不明の場合の「売却額×5%」は概算取得費の特例です。実際の取得費がわかる場合はそちらを使用してください。<br>
+        ※ 譲渡費用には仲介手数料・印紙代・測量費・解体費などが含まれます。
+      </p>
+    </div>
+
+  </section>
   <section id="loan"     class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>住宅ローン</h2><p>元利均等、毎月返済額・総支払額<br>Phase 2 で実装予定</p></div></section>
   <section id="rimawari" class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>利回り</h2><p>表面利回り・実質利回り<br>Phase 2 で実装予定</p></div></section>
   <section id="shohiyou" class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>諸費用合計</h2><p>売買時シミュレーション統合<br>Phase 2 で実装予定</p></div></section>
@@ -1285,6 +1449,182 @@
       $resi.checked = true;
       recalc();
     });
+  })();
+
+  /* =========================================================
+   * 譲渡所得税 (不動産売却)
+   *   税率は浮動小数誤差を避けるため /100000 の整数で保持
+   *   短期        : 所得税+復興 30.63% / 住民税 9%      → 39.63%
+   *   長期        : 所得税+復興 15.315% / 住民税 5%     → 20.315%
+   *   10年超軽減  : 6000万以下 = 所得税+復興 10.21% / 住民税 4% → 14.21%
+   *                 6000万超分 = 長期と同じ 20.315%
+   *   端数: 各税額を1円未満切り捨て (国税通則法 119条1項に準拠)
+   * ========================================================= */
+  (() => {
+    const $sale          = document.getElementById('joutou-sale');
+    const $cost          = document.getElementById('joutou-cost');
+    const $costUnk       = document.getElementById('joutou-cost-unknown');
+    const $expense       = document.getElementById('joutou-expense');
+    const $periods       = document.querySelectorAll('input[name="joutou-period"]');
+    const $deduction     = document.getElementById('joutou-deduction');
+    const $long10Red     = document.getElementById('joutou-long10-red');
+    const $long10Row     = document.getElementById('joutou-long10-row');
+    const $outProfit     = document.getElementById('joutou-out-profit');
+    const $outDeduct     = document.getElementById('joutou-out-deduct');
+    const $outDeductRow  = document.getElementById('joutou-out-deduct-row');
+    const $outTaxable    = document.getElementById('joutou-out-taxable');
+    const $outIncome     = document.getElementById('joutou-out-income');
+    const $outResid      = document.getElementById('joutou-out-residence');
+    const $outTotal      = document.getElementById('joutou-out-total');
+    const $note          = document.getElementById('joutou-note');
+
+    // 税率は /100000 単位 (例: 30630 → 30.630%)
+    const RATES = {
+      short:      { ir: 30630, res: 9000 },
+      long:       { ir: 15315, res: 5000 },
+      long10_low: { ir: 10210, res: 4000 },
+    };
+    const TIER_LIMIT_YEN  = 60_000_000; // 6000万円
+    const DEDUCTION_YEN   = 30_000_000; // 3000万円特別控除
+    const ROUGH_COST_PCT  = 5;          // 概算取得費 = 売却額 × 5%
+
+    // yen * rate10k / 100000 を整数演算で。1円未満切り捨て。
+    function applyTax(yen, rate10k) {
+      return Math.floor((yen * rate10k) / 100000);
+    }
+
+    function getPeriod() {
+      for (const r of $periods) if (r.checked) return r.value;
+      return 'long';
+    }
+
+    function clearAllResults() {
+      setResult($outProfit,  null, 0);
+      setResult($outDeduct,  null, 0);
+      setResult($outTaxable, null, 0);
+      setResult($outIncome,  null, 0);
+      setResult($outResid,   null, 0);
+      setResult($outTotal,   null, 0);
+      $outDeductRow.hidden = true;
+      $note.textContent = '—';
+      $note.classList.add('empty');
+    }
+
+    // 取得費不明CB に応じて取得費欄を制御
+    function syncCostInput() {
+      if ($costUnk.checked) {
+        const saleMan = parseNum($sale.value);
+        $cost.value = saleMan == null
+          ? ''
+          : Number((saleMan * ROUGH_COST_PCT / 100).toFixed(4)).toString();
+        $cost.readOnly = true;
+      } else {
+        $cost.readOnly = false;
+      }
+    }
+
+    // 所有期間が「10年超」以外なら 10年超軽減CB を無効化
+    function syncLong10Row() {
+      const isLong10 = getPeriod() === 'long10';
+      if (!isLong10) {
+        $long10Red.checked  = false;
+        $long10Red.disabled = true;
+        $long10Row.classList.add('disabled');
+      } else {
+        $long10Red.disabled = false;
+        $long10Row.classList.remove('disabled');
+      }
+    }
+
+    function recalc() {
+      syncCostInput();
+      syncLong10Row();
+
+      const saleMan = parseNum($sale.value);
+      if (saleMan == null) {
+        clearAllResults();
+        return;
+      }
+
+      const sale    = saleMan * 10000;
+      const cost    = (parseNum($cost.value)    ?? 0) * 10000;
+      const expense = (parseNum($expense.value) ?? 0) * 10000;
+      const profit  = sale - cost - expense;
+
+      // 譲渡所得 ≤ 0: 課税対象なし
+      if (profit <= 0) {
+        setResult($outProfit, profit, 0);
+        $outDeductRow.hidden = true;
+        setResult($outTaxable, 0, 0);
+        setResult($outIncome,  0, 0);
+        setResult($outResid,   0, 0);
+        setResult($outTotal,   0, 0);
+        $note.textContent = '譲渡所得がマイナス → 課税対象なし';
+        $note.classList.remove('empty');
+        return;
+      }
+
+      const useDeduction = $deduction.checked;
+      const deduction    = useDeduction ? Math.min(DEDUCTION_YEN, profit) : 0;
+      const taxable      = profit - deduction;
+
+      const period       = getPeriod();
+      const useLong10Red = period === 'long10' && $long10Red.checked;
+
+      let income, residence, label;
+      if (period === 'short') {
+        income    = applyTax(taxable, RATES.short.ir);
+        residence = applyTax(taxable, RATES.short.res);
+        label = '短期譲渡 39.63% (所得税+復興30.63% / 住民税9%)';
+      } else if (useLong10Red) {
+        const low  = Math.min(taxable, TIER_LIMIT_YEN);
+        const high = Math.max(0, taxable - TIER_LIMIT_YEN);
+        income    = applyTax(low, RATES.long10_low.ir) + applyTax(high, RATES.long.ir);
+        residence = applyTax(low, RATES.long10_low.res) + applyTax(high, RATES.long.res);
+        label = high > 0
+          ? '10年超軽減 14.21% (6,000万円以下) + 20.315% (超過分)'
+          : '10年超軽減 14.21% (6,000万円以下)';
+      } else {
+        income    = applyTax(taxable, RATES.long.ir);
+        residence = applyTax(taxable, RATES.long.res);
+        label = '長期譲渡 20.315% (所得税+復興15.315% / 住民税5%)';
+      }
+
+      const total = income + residence;
+
+      setResult($outProfit,  profit, 0);
+      if (useDeduction) {
+        setResult($outDeduct, deduction, 0);
+        $outDeductRow.hidden = false;
+      } else {
+        $outDeductRow.hidden = true;
+      }
+      setResult($outTaxable, taxable,   0);
+      setResult($outIncome,  income,    0);
+      setResult($outResid,   residence, 0);
+      setResult($outTotal,   total,     0);
+
+      $note.textContent = label;
+      $note.classList.remove('empty');
+    }
+
+    [$sale, $cost, $expense].forEach(el => el.addEventListener('input', recalc));
+    $costUnk.addEventListener('change', recalc);
+    $periods.forEach(r => r.addEventListener('change', recalc));
+    $deduction.addEventListener('change', recalc);
+    $long10Red.addEventListener('change', recalc);
+
+    setupReset('joutou', () => {
+      $costUnk.checked   = false;
+      $deduction.checked = false;
+      $long10Red.checked = false;
+      $periods.forEach(r => { r.checked = r.value === 'long'; });
+      $cost.readOnly = false;
+      recalc();
+    });
+
+    // 初期描画: 10年超軽減CBの無効化状態を反映
+    syncLong10Row();
   })();
 </script>
 

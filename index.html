@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0d1b2a">
+<title>不動産総合計算機 | T・K企画</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0d1b2a;
+    --navy-2: #1b2a3f;
+    --navy-3: #2a3c55;
+    --gold: #c9a84c;
+    --gold-dim: #8a7330;
+    --text: #f5f0e1;
+    --text-dim: #a9b2c0;
+    --danger: #e07a5f;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--navy);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: contain;
+  }
+  .num, code, pre { font-family: 'DM Mono', monospace; }
+
+  header {
+    background: linear-gradient(180deg, #0a1521 0%, var(--navy) 100%);
+    padding: calc(var(--safe-top) + 12px) 16px 12px;
+    border-bottom: 1px solid var(--navy-3);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .title-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  h1 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  h1 .accent { color: var(--gold); }
+  .subtitle {
+    font-size: 12px;
+    color: var(--gold);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+  }
+  .notice {
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: rgba(224, 122, 95, 0.12);
+    border: 1px solid rgba(224, 122, 95, 0.35);
+    border-radius: 6px;
+    font-size: 11px;
+    line-height: 1.5;
+    color: #f3c9bd;
+  }
+  .notice b { color: var(--danger); }
+
+  nav.tabs {
+    display: flex;
+    gap: 4px;
+    padding: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    background: var(--navy-2);
+    border-bottom: 1px solid var(--navy-3);
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    position: sticky;
+    top: 0;
+    z-index: 9;
+  }
+  nav.tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex: 0 0 auto;
+    padding: 8px 14px;
+    background: transparent;
+    border: 1px solid var(--navy-3);
+    border-radius: 999px;
+    color: var(--text-dim);
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--navy);
+    font-weight: 700;
+  }
+
+  main {
+    padding: 16px;
+    padding-bottom: calc(24px + var(--safe-bottom));
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .placeholder {
+    margin-top: 24px;
+    padding: 32px 16px;
+    text-align: center;
+    background: var(--navy-2);
+    border: 1px dashed var(--navy-3);
+    border-radius: 10px;
+  }
+  .placeholder .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    background: var(--gold-dim);
+    color: var(--navy);
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 999px;
+    letter-spacing: 0.05em;
+  }
+  .placeholder h2 {
+    margin: 12px 0 4px;
+    font-size: 18px;
+    color: var(--gold);
+  }
+  .placeholder p {
+    margin: 4px 0 0;
+    color: var(--text-dim);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  footer {
+    text-align: center;
+    padding: 16px 12px calc(20px + var(--safe-bottom));
+    color: var(--text-dim);
+    font-size: 11px;
+    border-top: 1px solid var(--navy-3);
+    margin-top: 32px;
+  }
+  footer .num { color: var(--gold); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title-row">
+    <h1>不動産<span class="accent">総合計算機</span></h1>
+    <span class="subtitle">T・K企画</span>
+  </div>
+  <div class="notice">
+    <b>ご注意</b>：計算結果は <b>概算</b> です。正確な税額は税務署・税理士へご確認ください。
+  </div>
+</header>
+
+<nav class="tabs" id="tabs" role="tablist" aria-label="計算機タブ">
+  <button class="tab active" data-target="tsubo"    role="tab">坪単価/面積</button>
+  <button class="tab"        data-target="chukai"   role="tab">仲介手数料</button>
+  <button class="tab"        data-target="inshi"    role="tab">印紙税</button>
+  <button class="tab"        data-target="touroku"  role="tab">登録免許税</button>
+  <button class="tab"        data-target="shutoku"  role="tab">不動産取得税</button>
+  <button class="tab"        data-target="joutou"   role="tab">譲渡所得税</button>
+  <button class="tab"        data-target="loan"     role="tab">住宅ローン</button>
+  <button class="tab"        data-target="rimawari" role="tab">利回り</button>
+  <button class="tab"        data-target="shohiyou" role="tab">諸費用合計</button>
+  <button class="tab"        data-target="gunyou"   role="tab">軍用地</button>
+</nav>
+
+<main>
+  <section id="tsubo"    class="panel active" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>坪単価 / 面積</h2><p>㎡↔坪、坪単価↔㎡単価の換算<br>Phase 2 で実装予定</p></div></section>
+  <section id="chukai"   class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>仲介手数料</h2><p>宅建業法に基づく速算式<br>Phase 2 で実装予定</p></div></section>
+  <section id="inshi"    class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>印紙税</h2><p>不動産売買契約書 (軽減税率対応)<br>Phase 2 で実装予定</p></div></section>
+  <section id="touroku"  class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>登録免許税</h2><p>所有権移転・抵当権設定<br>Phase 2 で実装予定</p></div></section>
+  <section id="shutoku"  class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>不動産取得税</h2><p>標準税率・軽減措置<br>Phase 2 で実装予定</p></div></section>
+  <section id="joutou"   class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>譲渡所得税</h2><p>短期・長期、3000万特別控除等<br>Phase 2 で実装予定</p></div></section>
+  <section id="loan"     class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>住宅ローン</h2><p>元利均等、毎月返済額・総支払額<br>Phase 2 で実装予定</p></div></section>
+  <section id="rimawari" class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>利回り</h2><p>表面利回り・実質利回り<br>Phase 2 で実装予定</p></div></section>
+  <section id="shohiyou" class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>諸費用合計</h2><p>売買時シミュレーション統合<br>Phase 2 で実装予定</p></div></section>
+  <section id="gunyou"   class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>軍用地</h2><p>倍率による評価額算出 (沖縄ローカル)<br>Phase 2 で実装予定</p></div></section>
+</main>
+
+<footer>
+  <div>株式会社 T・K企画 不動産部門</div>
+  <div class="num">v0.1.0 — Phase 1</div>
+</footer>
+
+<script>
+  const tabs   = document.querySelectorAll('.tab');
+  const panels = document.querySelectorAll('.panel');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.dataset.target;
+      tabs.forEach(t   => t.classList.toggle('active', t === tab));
+      panels.forEach(p => p.classList.toggle('active', p.id === target));
+      tab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    });
+  });
+</script>
+
+</body>
+</html>

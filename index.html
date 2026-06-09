@@ -723,7 +723,78 @@
     </div>
 
   </section>
-  <section id="shutoku"  class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>不動産取得税</h2><p>標準税率・軽減措置<br>Phase 2 で実装予定</p></div></section>
+  <section id="shutoku" class="panel" role="tabpanel">
+
+    <div class="card" data-calc="shutoku">
+      <div class="card-head">
+        <h2 class="card-title">不動産取得税</h2>
+        <button type="button" class="btn-reset" data-reset="shutoku">リセット</button>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="shutoku-land">土地 固定資産税評価額</label>
+        <div class="input-row">
+          <input type="text" id="shutoku-land" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+          <span class="unit-label">万円</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="shutoku-building">建物 固定資産税評価額</label>
+        <div class="input-row">
+          <input type="text" id="shutoku-building" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+          <span class="unit-label">万円</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="shutoku-deduct">建物からの控除額</label>
+        <div class="input-row">
+          <input type="text" id="shutoku-deduct" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+          <span class="unit-label">万円</span>
+        </div>
+        <p class="hint">※新築住宅: 1,200万円 / 認定長期優良住宅: 1,300万円 / 中古住宅: 築年により100〜1,200万円</p>
+      </div>
+
+      <div class="field">
+        <label class="check-row" for="shutoku-land-half">
+          <input type="checkbox" id="shutoku-land-half" checked>
+          <span>宅地等の特例(評価額 × 1/2)を土地に適用<small>※2027/3/31まで</small></span>
+        </label>
+      </div>
+
+      <div class="field">
+        <label class="check-row" for="shutoku-residential">
+          <input type="checkbox" id="shutoku-residential" checked>
+          <span>住宅軽減税率 (3%) を適用<small>※2027/3/31まで(OFFで標準4%)</small></span>
+        </label>
+      </div>
+
+      <div class="results">
+        <div class="result-row">
+          <span class="result-label">土地分</span>
+          <span class="result-value result-sub empty" id="shutoku-out-land">—<span class="unit">円</span></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">建物分</span>
+          <span class="result-value result-sub empty" id="shutoku-out-building">—<span class="unit">円</span></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">合計</span>
+          <span class="result-value result-main empty" id="shutoku-out-total">—<span class="unit">円</span></span>
+        </div>
+      </div>
+
+      <p class="result-note empty" id="shutoku-note">—</p>
+
+      <p class="hint">
+        ※ 課税標準は固定資産税評価額(売買価格ではない)です。<br>
+        ※ マイホーム取得時には「土地に対する住宅取得控除」(税額控除)もありますが、計算が複雑なため当機では非対応です。要件を満たせば土地分がほぼゼロになるケースもあるため、実額は都道府県税事務所・税理士へご確認ください。<br>
+        ※ 中古住宅の建物控除額は新築年月により異なります(築年数控除表参照)。
+      </p>
+    </div>
+
+  </section>
   <section id="joutou"   class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>譲渡所得税</h2><p>短期・長期、3000万特別控除等<br>Phase 2 で実装予定</p></div></section>
   <section id="loan"     class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>住宅ローン</h2><p>元利均等、毎月返済額・総支払額<br>Phase 2 で実装予定</p></div></section>
   <section id="rimawari" class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>利回り</h2><p>表面利回り・実質利回り<br>Phase 2 で実装予定</p></div></section>
@@ -1147,6 +1218,72 @@
       $bRed.checked      = false;
       recalcA();
       recalcB();
+    });
+  })();
+
+  /* =========================================================
+   * 不動産取得税
+   *   税率: 軽減ON=3% / OFF=4%
+   *   土地: 評価額 × (1/2 if 宅地特例) × 税率
+   *   建物: max(0, 評価額 - 控除額) × 税率
+   *   端数: 100円未満切り捨て (土地・建物それぞれ)
+   *   ※「土地に対する住宅取得控除」(税額控除)は当機未対応
+   * ========================================================= */
+  (() => {
+    const $land     = document.getElementById('shutoku-land');
+    const $building = document.getElementById('shutoku-building');
+    const $deduct   = document.getElementById('shutoku-deduct');
+    const $half     = document.getElementById('shutoku-land-half');
+    const $resi     = document.getElementById('shutoku-residential');
+    const $outLand  = document.getElementById('shutoku-out-land');
+    const $outBuild = document.getElementById('shutoku-out-building');
+    const $outTotal = document.getElementById('shutoku-out-total');
+    const $note     = document.getElementById('shutoku-note');
+
+    const RATE_NORMAL  = 0.04;
+    const RATE_REDUCED = 0.03;
+
+    function recalc() {
+      const landMan  = parseNum($land.value);
+      const buildMan = parseNum($building.value);
+      const deductMan = parseNum($deduct.value) ?? 0; // 空欄なら控除0扱い
+
+      const rate = $resi.checked ? RATE_REDUCED : RATE_NORMAL;
+      const landMul = $half.checked ? 0.5 : 1;
+
+      if (landMan == null && buildMan == null) {
+        setResult($outLand,  null, 0);
+        setResult($outBuild, null, 0);
+        setResult($outTotal, null, 0);
+        $note.textContent = '—';
+        $note.classList.add('empty');
+        return;
+      }
+
+      const landYen  = landMan  == null ? 0
+        : floor100(landMan * 10000 * landMul * rate);
+      const buildYen = buildMan == null ? 0
+        : floor100(Math.max(0, buildMan * 10000 - deductMan * 10000) * rate);
+      const total    = landYen + buildYen;
+
+      setResult($outLand,  landMan  == null ? null : landYen,  0);
+      setResult($outBuild, buildMan == null ? null : buildYen, 0);
+      setResult($outTotal, total, 0);
+
+      const ratePct  = (rate * 100).toFixed(1) + '%';
+      const landNote = $half.checked ? '土地: 1/2特例 適用' : '土地: 特例なし';
+      const rateNote = $resi.checked ? `税率: ${ratePct}(軽減)` : `税率: ${ratePct}(標準)`;
+      $note.textContent = `${rateNote} / ${landNote}`;
+      $note.classList.remove('empty');
+    }
+
+    [$land, $building, $deduct].forEach(el => el.addEventListener('input', recalc));
+    [$half, $resi].forEach(el => el.addEventListener('change', recalc));
+
+    setupReset('shutoku', () => {
+      $half.checked = true;
+      $resi.checked = true;
+      recalc();
     });
   })();
 </script>

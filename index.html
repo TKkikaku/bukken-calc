@@ -960,7 +960,131 @@
     </div>
 
   </section>
-  <section id="loan"     class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>住宅ローン</h2><p>元利均等、毎月返済額・総支払額<br>Phase 2 で実装予定</p></div></section>
+  <section id="loan" class="panel" role="tabpanel">
+
+    <div class="card" data-calc="loan">
+      <div class="card-head">
+        <h2 class="card-title">住宅ローン</h2>
+        <button type="button" class="btn-reset" data-reset="loan">リセット</button>
+      </div>
+
+      <div class="sub-tabs" data-subtabs="loan">
+        <button type="button" class="sub-tab active" data-subtarget="loan-pay">月返済額</button>
+        <button type="button" class="sub-tab"        data-subtarget="loan-cap">借入可能額(逆算)</button>
+      </div>
+
+      <!-- ===== A: 月返済額 ===== -->
+      <div class="sub-panel active" id="loan-pay">
+        <div class="field">
+          <label class="field-label" for="loan-principal">借入額</label>
+          <div class="input-row">
+            <input type="text" id="loan-principal" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+            <span class="unit-label">万円</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="loan-rate-a">年利</label>
+          <div class="input-row">
+            <input type="text" id="loan-rate-a" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+            <span class="unit-label">%</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="loan-years-a">返済期間</label>
+          <div class="input-row">
+            <input type="text" id="loan-years-a" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+            <span class="unit-label">年</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field-label">返済方式</span>
+          <div class="radio-group">
+            <label><input type="radio" name="loan-method" value="equal" checked>元利均等<small>毎月一定</small></label>
+            <label><input type="radio" name="loan-method" value="principal">元金均等<small>元金一定</small></label>
+          </div>
+        </div>
+
+        <div class="results">
+          <div class="result-row">
+            <span class="result-label" id="loan-monthly-label">月返済額</span>
+            <span class="result-value result-main empty" id="loan-out-monthly">—<span class="unit">円</span></span>
+          </div>
+          <div class="result-row" id="loan-out-last-row" hidden>
+            <span class="result-label">月返済額 (最終回)</span>
+            <span class="result-value result-sub empty" id="loan-out-last">—<span class="unit">円</span></span>
+          </div>
+          <div class="result-row" id="loan-out-yearly-row">
+            <span class="result-label">年間返済額</span>
+            <span class="result-value result-sub empty" id="loan-out-yearly">—<span class="unit">円</span></span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">総返済額</span>
+            <span class="result-value result-sub empty" id="loan-out-total">—<span class="unit">円</span></span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">総利息</span>
+            <span class="result-value result-sub empty" id="loan-out-interest">—<span class="unit">円</span></span>
+          </div>
+        </div>
+
+        <p class="result-note empty" id="loan-note-a">—</p>
+      </div>
+
+      <!-- ===== B: 借入可能額 (元利均等で逆算) ===== -->
+      <div class="sub-panel" id="loan-cap">
+        <div class="field">
+          <label class="field-label" for="loan-monthly">月返済額</label>
+          <div class="input-row">
+            <input type="text" id="loan-monthly" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+            <span class="unit-label">万円</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="loan-rate-b">年利</label>
+          <div class="input-row">
+            <input type="text" id="loan-rate-b" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+            <span class="unit-label">%</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="loan-years-b">返済期間</label>
+          <div class="input-row">
+            <input type="text" id="loan-years-b" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+            <span class="unit-label">年</span>
+          </div>
+        </div>
+
+        <div class="results">
+          <div class="result-row">
+            <span class="result-label">借入可能額</span>
+            <span class="result-value result-main empty" id="loan-out-cap">—<span class="unit">円</span></span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">総返済額</span>
+            <span class="result-value result-sub empty" id="loan-out-cap-total">—<span class="unit">円</span></span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">総利息</span>
+            <span class="result-value result-sub empty" id="loan-out-cap-interest">—<span class="unit">円</span></span>
+          </div>
+        </div>
+
+        <p class="result-note empty" id="loan-note-b">元利均等返済 で逆算</p>
+      </div>
+
+      <p class="hint">
+        ※ 表示額は概算です。実際の返済額は金融機関により異なります(金利方式・手数料・繰上返済等)。<br>
+        ※ ここでは固定金利の前提で計算しています。変動金利は将来の金利変動により実額が変わります。<br>
+        ※ ボーナス返済は考慮していません。
+      </p>
+    </div>
+
+  </section>
   <section id="rimawari" class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>利回り</h2><p>表面利回り・実質利回り<br>Phase 2 で実装予定</p></div></section>
   <section id="shohiyou" class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>諸費用合計</h2><p>売買時シミュレーション統合<br>Phase 2 で実装予定</p></div></section>
   <section id="gunyou"   class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>軍用地</h2><p>倍率による評価額算出 (沖縄ローカル)<br>Phase 2 で実装予定</p></div></section>
@@ -1625,6 +1749,177 @@
 
     // 初期描画: 10年超軽減CBの無効化状態を反映
     syncLong10Row();
+  })();
+
+  /* =========================================================
+   * 住宅ローン
+   *   A: 月返済額 (元利均等 / 元金均等)
+   *      元利均等: M = P × r × (1+r)^n / ((1+r)^n − 1)
+   *      元金均等: 元金部分 P/n + 各月利息 → 初回最大、毎月逓減
+   *   B: 借入可能額 (元利均等で逆算)
+   *      P = M × ((1+r)^n − 1) / (r × (1+r)^n)
+   *   端数: 各表示額を1円未満切り捨て
+   * ========================================================= */
+  (() => {
+    setupSubTabs('loan');
+
+    // --- 共通: 入力が「全部空」と「数値で 0」を区別 ---
+    //  全部空 → 結果は "—"
+    //  0 を含む → 0円表示 (借入0万・期間0年などのケース)
+    function allFilledOrSomeZero(...vals) {
+      return vals.every(v => v != null);
+    }
+
+    // ----- A: 月返済額 -----
+    const $aPrincipal  = document.getElementById('loan-principal');
+    const $aRate       = document.getElementById('loan-rate-a');
+    const $aYears      = document.getElementById('loan-years-a');
+    const $aMethods    = document.querySelectorAll('input[name="loan-method"]');
+    const $aMonthLabel = document.getElementById('loan-monthly-label');
+    const $aOutMonth   = document.getElementById('loan-out-monthly');
+    const $aOutLast    = document.getElementById('loan-out-last');
+    const $aOutLastRow = document.getElementById('loan-out-last-row');
+    const $aOutYear    = document.getElementById('loan-out-yearly');
+    const $aOutYearRow = document.getElementById('loan-out-yearly-row');
+    const $aOutTotal   = document.getElementById('loan-out-total');
+    const $aOutInt     = document.getElementById('loan-out-interest');
+    const $aNote       = document.getElementById('loan-note-a');
+
+    function getMethod() {
+      for (const r of $aMethods) if (r.checked) return r.value;
+      return 'equal';
+    }
+
+    function clearA() {
+      [$aOutMonth, $aOutLast, $aOutYear, $aOutTotal, $aOutInt].forEach(el => setResult(el, null, 0));
+      $aOutLastRow.hidden = true;
+      $aOutYearRow.hidden = false;
+      $aMonthLabel.textContent = '月返済額';
+      $aNote.textContent = '—';
+      $aNote.classList.add('empty');
+    }
+
+    function recalcA() {
+      const Pm     = parseNum($aPrincipal.value);
+      const ratePc = parseNum($aRate.value);
+      const yrs    = parseNum($aYears.value);
+      const method = getMethod();
+
+      if (!allFilledOrSomeZero(Pm, ratePc, yrs)) { clearA(); return; }
+
+      // 借入0 or 期間0 → 0円で表示 (エラーにしない)
+      if (Pm <= 0 || yrs <= 0) {
+        $aMonthLabel.textContent = method === 'equal' ? '月返済額' : '月返済額 (初回)';
+        setResult($aOutMonth, 0, 0);
+        if (method === 'equal') { $aOutLastRow.hidden = true; }
+        else { $aOutLastRow.hidden = false; setResult($aOutLast, 0, 0); }
+        $aOutYearRow.hidden = method !== 'equal';
+        setResult($aOutYear,  0, 0);
+        setResult($aOutTotal, 0, 0);
+        setResult($aOutInt,   0, 0);
+        $aNote.textContent = method === 'equal'
+          ? '元利均等返済 (毎月返済額一定)'
+          : '元金均等返済 (元金一定・利息逓減)';
+        $aNote.classList.remove('empty');
+        return;
+      }
+
+      const P = Pm * 10000;        // 円
+      const r = ratePc / 100 / 12; // 月利
+      const n = yrs * 12;          // 期間月数
+
+      if (method === 'equal') {
+        const monthly = (r === 0)
+          ? P / n
+          : P * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
+        const mFloor = Math.floor(monthly);
+        const yearly = mFloor * 12;
+        const total  = mFloor * n;
+        // 0%金利時など、月返済額の切り捨てで total<P となるケースで利息がマイナスにならないようクランプ
+        const inter  = Math.max(0, total - P);
+
+        $aMonthLabel.textContent = '月返済額';
+        setResult($aOutMonth, mFloor, 0);
+        $aOutLastRow.hidden = true;
+        $aOutYearRow.hidden = false;
+        setResult($aOutYear,  yearly, 0);
+        setResult($aOutTotal, total,  0);
+        setResult($aOutInt,   inter,  0);
+        $aNote.textContent = '元利均等返済 (毎月返済額一定)';
+        $aNote.classList.remove('empty');
+      } else {
+        // 元金均等
+        const principalPart = P / n;
+        const firstMonthly  = principalPart + P * r;            // 1ヶ月目
+        const lastMonthly   = principalPart + principalPart * r; // 最終ヶ月
+        const totalInterest = P * r * (n + 1) / 2;
+        const totalPayment  = P + totalInterest;
+
+        $aMonthLabel.textContent = '月返済額 (初回)';
+        setResult($aOutMonth, Math.floor(firstMonthly), 0);
+        $aOutLastRow.hidden = false;
+        setResult($aOutLast,  Math.floor(lastMonthly),  0);
+        // 元金均等は毎年返済額が変わるので「年間返済額」は表示しない
+        $aOutYearRow.hidden = true;
+        setResult($aOutTotal, Math.floor(totalPayment),  0);
+        setResult($aOutInt,   Math.floor(totalInterest), 0);
+        $aNote.textContent = '元金均等返済 (元金一定・利息逓減)';
+        $aNote.classList.remove('empty');
+      }
+    }
+
+    [$aPrincipal, $aRate, $aYears].forEach(el => el.addEventListener('input', recalcA));
+    $aMethods.forEach(r => r.addEventListener('change', recalcA));
+
+    // ----- B: 借入可能額 (元利均等で逆算) -----
+    const $bMonth      = document.getElementById('loan-monthly');
+    const $bRate       = document.getElementById('loan-rate-b');
+    const $bYears      = document.getElementById('loan-years-b');
+    const $bOutCap     = document.getElementById('loan-out-cap');
+    const $bOutTotal   = document.getElementById('loan-out-cap-total');
+    const $bOutInt     = document.getElementById('loan-out-cap-interest');
+
+    function clearB() {
+      [$bOutCap, $bOutTotal, $bOutInt].forEach(el => setResult(el, null, 0));
+    }
+
+    function recalcB() {
+      const Mm     = parseNum($bMonth.value);
+      const ratePc = parseNum($bRate.value);
+      const yrs    = parseNum($bYears.value);
+
+      if (!allFilledOrSomeZero(Mm, ratePc, yrs)) { clearB(); return; }
+
+      if (Mm <= 0 || yrs <= 0) {
+        setResult($bOutCap,   0, 0);
+        setResult($bOutTotal, 0, 0);
+        setResult($bOutInt,   0, 0);
+        return;
+      }
+
+      const M = Mm * 10000;       // 円
+      const r = ratePc / 100 / 12;
+      const n = yrs * 12;
+
+      const principal = (r === 0)
+        ? M * n
+        : M * (Math.pow(1 + r, n) - 1) / (r * Math.pow(1 + r, n));
+      const total    = M * n;
+      const interest = total - principal;
+
+      setResult($bOutCap,   Math.floor(principal), 0);
+      setResult($bOutTotal, Math.floor(total),     0);
+      setResult($bOutInt,   Math.floor(interest),  0);
+    }
+
+    [$bMonth, $bRate, $bYears].forEach(el => el.addEventListener('input', recalcB));
+
+    // ----- リセット -----
+    setupReset('loan', () => {
+      $aMethods.forEach(r => { r.checked = r.value === 'equal'; });
+      recalcA();
+      recalcB();
+    });
   })();
 </script>
 

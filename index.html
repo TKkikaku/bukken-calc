@@ -550,7 +550,44 @@
     </div>
 
   </section>
-  <section id="inshi"    class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>印紙税</h2><p>不動産売買契約書 (軽減税率対応)<br>Phase 2 で実装予定</p></div></section>
+  <section id="inshi" class="panel" role="tabpanel">
+
+    <!-- ===== 印紙税 (不動産売買契約書) ===== -->
+    <div class="card" data-calc="inshi">
+      <div class="card-head">
+        <h2 class="card-title">印紙税 (不動産売買契約書)</h2>
+        <button type="button" class="btn-reset" data-reset="inshi">リセット</button>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="inshi-price">契約金額</label>
+        <div class="input-row">
+          <input type="text" id="inshi-price" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+          <span class="unit-label">万円</span>
+        </div>
+      </div>
+
+      <div class="results">
+        <div class="result-row">
+          <span class="result-label">軽減税額 (適用税率)</span>
+          <span class="result-value result-main empty" id="inshi-out-genyu">—<span class="unit">円</span></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">本則税額 (参考)</span>
+          <span class="result-value result-sub empty" id="inshi-out-honsoku">—<span class="unit">円</span></span>
+        </div>
+      </div>
+
+      <p class="result-note empty" id="inshi-note">—</p>
+
+      <p class="hint">
+        ※ 軽減税率は2027年(令和9年)3月31日までに作成される不動産売買契約書に適用されます。<br>
+        ※ 電子契約の場合、印紙税は非課税です。<br>
+        ※ 契約書を2通作成する場合、それぞれに印紙が必要です。
+      </p>
+    </div>
+
+  </section>
   <section id="touroku"  class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>登録免許税</h2><p>所有権移転・抵当権設定<br>Phase 2 で実装予定</p></div></section>
   <section id="shutoku"  class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>不動産取得税</h2><p>標準税率・軽減措置<br>Phase 2 で実装予定</p></div></section>
   <section id="joutou"   class="panel" role="tabpanel"><div class="placeholder"><span class="badge">PHASE 2</span><h2>譲渡所得税</h2><p>短期・長期、3000万特別控除等<br>Phase 2 で実装予定</p></div></section>
@@ -802,6 +839,67 @@
     });
     $price.addEventListener('input', recalc);
     $special.addEventListener('change', recalc);
+  })();
+
+  /* =========================================================
+   * 印紙税 (不動産売買契約書)
+   *   入力: 万円 / 出力: 円
+   *   税額表ルックアップ (上界=その階層に含む)。1万円未満は非課税。
+   *   軽減税率は本則と分けて両方表示。
+   * ========================================================= */
+  (() => {
+    const $price     = document.getElementById('inshi-price');
+    const $outGenyu  = document.getElementById('inshi-out-genyu');
+    const $outHonsoku= document.getElementById('inshi-out-honsoku');
+    const $note      = document.getElementById('inshi-note');
+
+    // maxYen は「その階層の上界(以下)」。1万円未満は別扱いで非課税。
+    const STAMP_BRACKETS = [
+      { maxYen: 100000,         honsoku: 200,    genyu: 200,    label: '1万円以上〜10万円以下' },
+      { maxYen: 500000,         honsoku: 400,    genyu: 200,    label: '10万円超〜50万円以下' },
+      { maxYen: 1000000,        honsoku: 1000,   genyu: 500,    label: '50万円超〜100万円以下' },
+      { maxYen: 5000000,        honsoku: 2000,   genyu: 1000,   label: '100万円超〜500万円以下' },
+      { maxYen: 10000000,       honsoku: 10000,  genyu: 5000,   label: '500万円超〜1,000万円以下' },
+      { maxYen: 50000000,       honsoku: 20000,  genyu: 10000,  label: '1,000万円超〜5,000万円以下' },
+      { maxYen: 100000000,      honsoku: 60000,  genyu: 30000,  label: '5,000万円超〜1億円以下' },
+      { maxYen: 500000000,      honsoku: 100000, genyu: 60000,  label: '1億円超〜5億円以下' },
+      { maxYen: 1000000000,     honsoku: 200000, genyu: 160000, label: '5億円超〜10億円以下' },
+      { maxYen: 5000000000,     honsoku: 400000, genyu: 320000, label: '10億円超〜50億円以下' },
+      { maxYen: Infinity,       honsoku: 600000, genyu: 480000, label: '50億円超' },
+    ];
+
+    // 非課税表示 (「非課税」固定文字列、単位は維持)
+    function setNonTaxable(el) {
+      el.innerHTML = '非課税<span class="unit">円</span>';
+      el.classList.remove('empty');
+    }
+
+    function recalc() {
+      const priceMan = parseNum($price.value);
+      if (priceMan == null || priceMan < 0) {
+        setResult($outGenyu,   null, 0);
+        setResult($outHonsoku, null, 0);
+        $note.textContent = '—';
+        $note.classList.add('empty');
+        return;
+      }
+      const yen = priceMan * 10000;
+      if (yen < 10000) {
+        setNonTaxable($outGenyu);
+        setNonTaxable($outHonsoku);
+        $note.textContent = '適用: 1万円未満 (非課税)';
+        $note.classList.remove('empty');
+        return;
+      }
+      const bracket = STAMP_BRACKETS.find(b => yen <= b.maxYen);
+      setResult($outGenyu,   bracket.genyu,   0);
+      setResult($outHonsoku, bracket.honsoku, 0);
+      $note.textContent = '適用: ' + bracket.label;
+      $note.classList.remove('empty');
+    }
+
+    setupReset('inshi', recalc);
+    $price.addEventListener('input', recalc);
   })();
 </script>
 

@@ -776,6 +776,7 @@
       <div class="sub-tabs" data-subtabs="touroku">
         <button type="button" class="sub-tab active" data-subtarget="touroku-trans">所有権移転 (売買)</button>
         <button type="button" class="sub-tab"        data-subtarget="touroku-mort">抵当権設定</button>
+        <button type="button" class="sub-tab"        data-subtarget="touroku-cancel">抵当権抹消</button>
       </div>
 
       <!-- ===== A: 所有権移転 ===== -->
@@ -853,6 +854,33 @@
         </div>
 
         <p class="result-note empty" id="touroku-mort-note">—</p>
+      </div>
+
+      <!-- ===== C: 抵当権抹消 ===== -->
+      <div class="sub-panel" id="touroku-cancel">
+        <div class="field">
+          <label class="field-label" for="touroku-cancel-count">不動産の個数<small>※土地・建物は別カウント</small></label>
+          <div class="input-row">
+            <input type="text" id="touroku-cancel-count" class="num-input" inputmode="numeric" autocomplete="off" placeholder="2" value="2">
+            <span class="unit-label">個</span>
+          </div>
+        </div>
+
+        <div class="results">
+          <div class="result-row">
+            <span class="result-label">税額</span>
+            <span class="result-value result-main empty" id="touroku-out-cancel">—<span class="unit">円</span></span>
+          </div>
+        </div>
+
+        <p class="result-note empty" id="touroku-cancel-note">—</p>
+
+        <p class="hint">
+          ※ 抵当権抹消の登録免許税は不動産1個につき1,000円の定額です(土地と建物は別カウント)。<br>
+          ※ 同一申請で不動産が20個以上の場合は20,000円が上限です。<br>
+          ※ マンションの場合、敷地権の持分数により個数が変動するため、登記簿で確認してください。<br>
+          ※ この他に、司法書士に依頼する場合は別途報酬(1〜2万円程度が一般的)が必要です。
+        </p>
       </div>
 
       <p class="hint">
@@ -1621,6 +1649,13 @@
     return floor100(loanMan * 10000 * rate);
   }
 
+  // 登録免許税 抵当権抹消 — 不動産1個につき1,000円(定額)、同一申請20個以上は20,000円上限
+  // 登録免許税法別表第一・一(十五)、平成19年改正附則(上限20件)
+  function calcTourokuCancelYen(count) {
+    const n = count == null ? 0 : Math.max(0, Math.floor(count));
+    return Math.min(n * 1000, 20000);
+  }
+
   /* =========================================================
    * カード1: 坪単価計算
    * ========================================================= */
@@ -1966,13 +2001,48 @@
     $bLoan.addEventListener('input', recalcB);
     $bRed.addEventListener('change', recalcB);
 
-    // ----- リセット (両パネルともデフォルトCB状態に戻す) -----
+    // ----- C: 抵当権抹消 -----
+    const $cCount = document.getElementById('touroku-cancel-count');
+    const $cOut   = document.getElementById('touroku-out-cancel');
+    const $cNote  = document.getElementById('touroku-cancel-note');
+    const CANCEL_DEFAULT = '2';
+    const fmtYen = n => n.toLocaleString('ja-JP');
+
+    function recalcC() {
+      const raw = parseNum($cCount.value);
+      if (raw == null) {
+        setResult($cOut, null, 0);
+        $cNote.textContent = '—';
+        $cNote.classList.add('empty');
+        return;
+      }
+      const count = Math.max(0, Math.floor(raw));
+      const yen   = calcTourokuCancelYen(count);
+      setResult($cOut, yen, 0);
+      const capped = count >= 20;
+      $cNote.textContent = capped
+        ? `不動産${count}個 → 20,000円(20個上限適用)`
+        : `不動産${count}個 × 1,000円 = ${fmtYen(yen)}円`;
+      $cNote.classList.remove('empty');
+    }
+
+    // 整数のみ受付 (数字以外を除去)
+    $cCount.addEventListener('input', () => {
+      const cleaned = $cCount.value.replace(/[^0-9]/g, '');
+      if (cleaned !== $cCount.value) $cCount.value = cleaned;
+      recalcC();
+    });
+    recalcC();
+
+    // ----- リセット (両パネルともデフォルトCB状態に戻す / 個数は初期値2) -----
     setupReset('touroku', () => {
       $aLandRed.checked  = true;
       $aBuildRed.checked = false;
       $bRed.checked      = false;
+      $cCount.value      = CANCEL_DEFAULT;
       recalcA();
       recalcB();
+      recalcC();
     });
   })();
 

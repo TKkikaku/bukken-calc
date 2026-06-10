@@ -1270,10 +1270,17 @@
 
     <div class="card" data-calc="shohiyou">
       <div class="card-head">
-        <h2 class="card-title">諸費用合計 (購入時シミュレーション)</h2>
+        <h2 class="card-title">諸費用合計 (売買シミュレーション)</h2>
         <button type="button" class="btn-reset" data-reset="shohiyou">リセット</button>
       </div>
 
+      <div class="sub-tabs" data-subtabs="shohiyou">
+        <button type="button" class="sub-tab active" data-subtarget="shohiyou-buy">購入時</button>
+        <button type="button" class="sub-tab"        data-subtarget="shohiyou-sell">売却時</button>
+      </div>
+
+      <!-- ===== A: 購入時 (Phase 2-⑨ + Phase 3-② 既存内容) ===== -->
+      <div class="sub-panel active" id="shohiyou-buy">
       <div class="field">
         <label class="field-label" for="shohiyou-price">物件価格</label>
         <div class="input-row">
@@ -1395,6 +1402,115 @@
         ※ 火災保険料・ローン事務手数料・保証料・引越し費用などは「その他費用」にまとめて入力してください。<br>
         ※ 不動産取得税は購入後数ヶ月で通知されるため、別途準備が必要です。
       </p>
+      </div><!-- /#shohiyou-buy -->
+
+      <!-- ===== B: 売却時 (Phase 4-②) ===== -->
+      <div class="sub-panel" id="shohiyou-sell">
+        <div class="field">
+          <label class="field-label" for="shohiyou-sell-price">売却価格</label>
+          <div class="input-row">
+            <input type="text" id="shohiyou-sell-price" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+            <span class="unit-label">万円</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="shohiyou-sell-loan">借入残高 (抵当権抹消する残債)</label>
+          <div class="input-row">
+            <input type="text" id="shohiyou-sell-loan" class="num-input" inputmode="decimal" autocomplete="off" value="0">
+            <span class="unit-label">万円</span>
+          </div>
+          <p class="hint">※ 0なら抵当権抹消は不要(残債なし)</p>
+        </div>
+
+        <div class="field">
+          <label class="check-row" for="shohiyou-sell-taxable">
+            <input type="checkbox" id="shohiyou-sell-taxable">
+            <span>売主が課税事業者(建物に消費税含む)<small>※法人・宅建業者等の売主の場合・仲介手数料の計算に影響</small></span>
+          </label>
+        </div>
+
+        <div class="field" id="shohiyou-sell-buildingtax-row" hidden>
+          <label class="field-label" for="shohiyou-sell-buildingtax">うち建物部分の税込価格</label>
+          <div class="input-row">
+            <input type="text" id="shohiyou-sell-buildingtax" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+            <span class="unit-label">万円</span>
+          </div>
+          <p class="hint">※ 売却価格のうち、建物に該当する部分(税込)</p>
+        </div>
+
+        <div class="field" id="shohiyou-sell-count-row" hidden>
+          <label class="field-label" for="shohiyou-sell-count">不動産の個数<small>※抵当権抹消用・土地と建物は別カウント</small></label>
+          <div class="input-row">
+            <input type="text" id="shohiyou-sell-count" class="num-input" inputmode="numeric" autocomplete="off" placeholder="2" value="2">
+            <span class="unit-label">個</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="shohiyou-sell-shihou">司法書士報酬</label>
+          <div class="input-row">
+            <input type="text" id="shohiyou-sell-shihou" class="num-input" inputmode="decimal" autocomplete="off" value="15000">
+            <span class="unit-label">円</span>
+          </div>
+          <p class="hint">※ 抵当権抹消のみ依頼の相場(1〜2万円程度)</p>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="shohiyou-sell-other">その他費用</label>
+          <div class="input-row">
+            <input type="text" id="shohiyou-sell-other" class="num-input" inputmode="decimal" autocomplete="off" value="0">
+            <span class="unit-label">円</span>
+          </div>
+          <p class="hint">※ 登記情報閲覧・郵送料・住所変更登記などまとめて</p>
+        </div>
+
+        <div class="results">
+          <div class="result-row">
+            <span class="result-label">仲介手数料 (税込)<small id="shohiyou-sell-chukai-note" hidden style="display:block;font-size:10px;color:var(--gold);margin-top:2px;">※税抜換算で計算</small></span>
+            <span class="result-value result-sub empty" id="shohiyou-sell-out-chukai">—<span class="unit">円</span></span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">印紙税 (軽減)</span>
+            <span class="result-value result-sub empty" id="shohiyou-sell-out-inshi">—<span class="unit">円</span></span>
+          </div>
+          <div class="result-row" id="shohiyou-sell-out-cancel-row" hidden>
+            <span class="result-label">登録免許税 (抵当権抹消)</span>
+            <span class="result-value result-sub empty" id="shohiyou-sell-out-cancel">—<span class="unit">円</span></span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">司法書士報酬</span>
+            <span class="result-value result-sub empty" id="shohiyou-sell-out-shihou">—<span class="unit">円</span></span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">その他費用</span>
+            <span class="result-value result-sub empty" id="shohiyou-sell-out-other">—<span class="unit">円</span></span>
+          </div>
+
+          <div class="result-row total-separator">
+            <span class="result-label">諸費用合計</span>
+            <span class="result-value result-main empty" id="shohiyou-sell-out-total">—<span class="unit">円</span></span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">売却価格に対する諸費用率</span>
+            <span class="result-value result-sub empty" id="shohiyou-sell-out-rate">—<span class="unit">%</span></span>
+          </div>
+        </div>
+
+        <p class="hint hint-warn" id="shohiyou-sell-warn-building" hidden>建物価格が売却価格を上回っています(入力値を確認してください)</p>
+
+        <p class="hint" style="background: rgba(201,168,76,0.06); border: 1px solid rgba(201,168,76,0.2); padding: 8px 10px; border-radius: 4px; color: var(--gold);">
+          <b>参考</b>: 売却益が出る場合は別途、<b>譲渡所得税</b>(所得税・住民税)が発生します。詳細は「譲渡所得税」タブで試算してください。
+        </p>
+
+        <p class="hint">
+          ※ これは売主側の概算諸費用です。実際の費用は物件・司法書士・地域・残債の有無により変動します。<br>
+          ※ 抵当権抹消は住宅ローン等の残債がある場合のみ必要です。借入残高が0なら不要。<br>
+          ※ 司法書士報酬は依頼内容(抹消のみ/抹消+住所変更登記等)により変動します。1〜2万円程度が相場。<br>
+          ※ 売却益が出た場合の譲渡所得税は別途必要です(「譲渡所得税」タブで試算可能)。<br>
+          ※ 売買契約書の印紙税は売主・買主それぞれが負担するのが一般的(各1通保管・別印紙)。
+        </p>
+      </div><!-- /#shohiyou-sell -->
     </div>
 
   </section>
@@ -2533,13 +2649,18 @@
   })();
 
   /* =========================================================
-   * 諸費用合計 (購入時シミュレーション)
-   *   仲介手数料・印紙税・登録免許税(所有権移転/抵当権)を共通関数で算出
-   *   + 司法書士報酬 + その他費用
-   *   評価額未入力時: 土地=価格×70%、建物=0
-   *   借入額0または空欄: 抵当権設定行は非表示
+   * 諸費用合計 (売買シミュレーション)
+   *   A: 購入時 — 仲介手数料・印紙税・登録免許税(所有権移転/抵当権設定)
+   *              + 司法書士報酬 + その他費用 / 評価額未入力時 土地=価格×70%・建物=0
+   *   B: 売却時 — 仲介手数料・印紙税・登録免許税(抵当権抹消)
+   *              + 司法書士報酬 + その他費用 / 借入残高0のとき抵当権抹消は非表示
+   *   リセットは表示中のサブタブのみを対象 (各サブタブ個別)
    * ========================================================= */
   (() => {
+    setupSubTabs('shohiyou');
+
+    /* ----- A: 購入時 (Phase 2-⑨ + Phase 3-②) ----- */
+    const buy = (() => {
     const $price        = document.getElementById('shohiyou-price');
     const $loan         = document.getElementById('shohiyou-loan');
     const $taxable      = document.getElementById('shohiyou-taxable');
@@ -2630,13 +2751,132 @@
     [$price, $loan, $land, $building, $buildingTax, $shihou, $other].forEach(el => el.addEventListener('input', recalc));
     [$reduced, $taxable].forEach(el => el.addEventListener('change', recalc));
 
-    setupReset('shohiyou', () => {
+    function reset() {
+      document.querySelectorAll('#shohiyou-buy input.num-input').forEach(i => { i.value = ''; });
       $reduced.checked        = false;
       $taxable.checked        = false;
       $buildingTaxRow.hidden  = true;
       $shihou.value           = '100000';
       $other.value            = '0';
       recalc();
+    }
+    return { recalc, reset };
+    })();
+
+    /* ----- B: 売却時 (Phase 4-②) ----- */
+    const sell = (() => {
+      const $price       = document.getElementById('shohiyou-sell-price');
+      const $loan        = document.getElementById('shohiyou-sell-loan');
+      const $taxable     = document.getElementById('shohiyou-sell-taxable');
+      const $buildingTax = document.getElementById('shohiyou-sell-buildingtax');
+      const $buildingTaxRow = document.getElementById('shohiyou-sell-buildingtax-row');
+      const $count       = document.getElementById('shohiyou-sell-count');
+      const $countRow    = document.getElementById('shohiyou-sell-count-row');
+      const $shihou      = document.getElementById('shohiyou-sell-shihou');
+      const $other       = document.getElementById('shohiyou-sell-other');
+
+      const $outChukai    = document.getElementById('shohiyou-sell-out-chukai');
+      const $chukaiNote   = document.getElementById('shohiyou-sell-chukai-note');
+      const $outInshi     = document.getElementById('shohiyou-sell-out-inshi');
+      const $outCancel    = document.getElementById('shohiyou-sell-out-cancel');
+      const $outCancelRow = document.getElementById('shohiyou-sell-out-cancel-row');
+      const $outShihou    = document.getElementById('shohiyou-sell-out-shihou');
+      const $outOther     = document.getElementById('shohiyou-sell-out-other');
+      const $outTotal     = document.getElementById('shohiyou-sell-out-total');
+      const $outRate      = document.getElementById('shohiyou-sell-out-rate');
+      const $warnBuilding = document.getElementById('shohiyou-sell-warn-building');
+
+      function clearAll() {
+        [$outChukai, $outInshi, $outCancel, $outShihou, $outOther, $outTotal]
+          .forEach(el => setResult(el, null, 0));
+        setResult($outRate, null, 2);
+        $outCancelRow.hidden = true;
+        $chukaiNote.hidden = true;
+        $warnBuilding.hidden = true;
+      }
+
+      function recalc() {
+        const priceMan = parseNum($price.value);
+        const loanMan  = parseNum($loan.value) ?? 0;
+
+        // 課税事業者CBに連動した建物税込価格欄の表示
+        $buildingTaxRow.hidden = !$taxable.checked;
+        // 借入残高>0のときのみ不動産個数欄を表示 (抵当権抹消用)
+        $countRow.hidden = !(loanMan > 0);
+
+        if (priceMan == null) {
+          clearAll();
+          return;
+        }
+
+        const shihouYen = parseNum($shihou.value) ?? 0;
+        const otherYen  = parseNum($other.value)  ?? 0;
+        const count     = parseNum($count.value)  ?? 0;
+        // 課税事業者ON時のみ建物税込価格を共通関数に渡す (税抜換算)
+        const buildingTaxedMan = $taxable.checked ? parseNum($buildingTax.value) : null;
+
+        const chukai = calcChukaiTaxIncluded(priceMan, false, buildingTaxedMan);
+        const inshi  = calcInshiGenyuYen(priceMan);
+        const cancel = calcTourokuCancelYen(count);
+
+        setResult($outChukai, chukai,    0);
+        setResult($outInshi,  inshi,     0);
+        setResult($outShihou, shihouYen, 0);
+        setResult($outOther,  otherYen,  0);
+
+        // 仲介手数料の補足表示 (課税事業者ON & 建物価格指定時のみ)
+        $chukaiNote.hidden = !($taxable.checked && buildingTaxedMan != null && buildingTaxedMan > 0);
+        // 建物税込価格 > 売却価格 の警告
+        $warnBuilding.hidden = !($taxable.checked && buildingTaxedMan != null && buildingTaxedMan > priceMan);
+
+        // 抵当権抹消は借入残高>0のときのみ計上
+        if (loanMan > 0) {
+          $outCancelRow.hidden = false;
+          setResult($outCancel, cancel, 0);
+        } else {
+          $outCancelRow.hidden = true;
+        }
+
+        const total = chukai + inshi + (loanMan > 0 ? cancel : 0) + shihouYen + otherYen;
+        setResult($outTotal, total, 0);
+
+        if (priceMan > 0) {
+          setResult($outRate, total / (priceMan * 10000) * 100, 2);
+        } else {
+          setResult($outRate, null, 2);
+        }
+      }
+
+      // 個数は整数のみ受付
+      $count.addEventListener('input', () => {
+        const cleaned = $count.value.replace(/[^0-9]/g, '');
+        if (cleaned !== $count.value) $count.value = cleaned;
+        recalc();
+      });
+      [$price, $loan, $buildingTax, $shihou, $other].forEach(el => el.addEventListener('input', recalc));
+      $taxable.addEventListener('change', recalc);
+
+      function reset() {
+        document.querySelectorAll('#shohiyou-sell input.num-input').forEach(i => { i.value = ''; });
+        $taxable.checked       = false;
+        $buildingTaxRow.hidden = true;
+        $loan.value            = '0';
+        $count.value           = '2';
+        $countRow.hidden       = true;
+        $shihou.value          = '15000';
+        $other.value           = '0';
+        recalc();
+      }
+
+      recalc();
+      return { recalc, reset };
+    })();
+
+    /* ----- 共有リセット: 表示中のサブタブのみリセット ----- */
+    const $resetBtn = document.querySelector('[data-reset="shohiyou"]');
+    if ($resetBtn) $resetBtn.addEventListener('click', () => {
+      const buyActive = document.getElementById('shohiyou-buy').classList.contains('active');
+      (buyActive ? buy : sell).reset();
     });
   })();
 

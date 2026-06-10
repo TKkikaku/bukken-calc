@@ -530,7 +530,105 @@
     margin-top: 32px;
   }
   footer .num { color: var(--gold); }
+
+  /* ===== Phase 6: 出力用UI (テキスト入力・出力ボタン) ===== */
+  .input-row input.text-input {
+    flex: 1;
+    min-width: 0;
+    background: var(--navy);
+    border: 1px solid var(--navy-3);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 15px;
+    padding: 10px 12px;
+    text-align: left;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+  .input-row input.text-input:focus { border-color: var(--gold); }
+  .input-row input.text-input::placeholder { color: #4a5670; }
+
+  .export-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .btn-export {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: var(--gold);
+    color: var(--navy);
+    border: none;
+    border-radius: 10px;
+    padding: 13px 12px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: filter 0.15s ease, opacity 0.15s ease;
+  }
+  .btn-export:hover, .btn-export:focus-visible { filter: brightness(1.08); outline: none; }
+  .btn-export:active { filter: brightness(0.95); }
+  .btn-export:disabled { opacity: 0.55; cursor: default; filter: none; }
+  .btn-export.secondary {
+    background: var(--navy-2);
+    color: var(--gold);
+    border: 1px solid var(--gold-dim);
+  }
+
+  /* ===== Phase 6: 印刷用ドキュメント (出力専用・白背景) ===== */
+  .print-doc {
+    width: 794px;            /* A4幅 96dpi換算 */
+    box-sizing: border-box;
+    padding: 40px;
+    background: #ffffff;
+    color: #1a1a1a;
+    font-family: 'Noto Sans JP', sans-serif;
+    line-height: 1.6;
+  }
+  .print-doc * { box-sizing: border-box; }
+  .print-head { border-bottom: 2px solid #c9a84c; padding-bottom: 16px; margin-bottom: 22px; }
+  .print-head-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+  .print-title { margin: 0; font-size: 24px; font-weight: 700; color: #0d1b2a; letter-spacing: 0.02em; }
+  .print-date { font-size: 13px; color: #555; white-space: nowrap; padding-top: 4px; }
+  .print-meta { margin-top: 14px; }
+  .print-property { font-size: 15px; color: #1a1a1a; font-weight: 500; }
+  .print-customer { font-size: 18px; color: #0d1b2a; font-weight: 700; margin-top: 4px; }
+  .print-summary {
+    font-size: 13px; color: #555;
+    background: #f6f3ea; border: 1px solid #e6ddc4;
+    border-radius: 6px; padding: 10px 12px; margin-bottom: 18px;
+  }
+  .print-table { margin-bottom: 10px; }
+  .print-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 10px 4px; border-bottom: 1px solid #e5e5e5;
+  }
+  .print-row-label { font-size: 14px; color: #333; }
+  .print-row-value { font-size: 15px; color: #1a1a1a; font-weight: 500; white-space: nowrap; }
+  .print-total {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-top: 14px; padding: 14px 16px;
+    background: #f6f3ea; border-left: 5px solid #c9a84c; border-radius: 4px;
+  }
+  .print-total-label { font-size: 16px; font-weight: 700; color: #0d1b2a; }
+  .print-total-value { font-size: 26px; font-weight: 700; color: #0d1b2a; white-space: nowrap; }
+  .print-rate {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-top: 8px; padding: 4px 16px; font-size: 13px; color: #555;
+  }
+  .print-foot { margin-top: 28px; border-top: 1px solid #e5e5e5; padding-top: 14px; }
+  .print-note { margin: 0 0 10px; font-size: 11px; color: #777; line-height: 1.6; }
+  .print-company { margin: 0; font-size: 14px; font-weight: 700; color: #0d1b2a; text-align: right; }
 </style>
+<!-- Phase 6: 画像/PDF出力ライブラリ (出力時のみ使用・遅延読込) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 </head>
 <body>
 
@@ -1282,6 +1380,19 @@
       <!-- ===== A: 購入時 (Phase 2-⑨ + Phase 3-② 既存内容) ===== -->
       <div class="sub-panel active" id="shohiyou-buy">
       <div class="field">
+        <label class="field-label" for="shohiyou-buy-property">物件名<small>※概算書に表示(任意)</small></label>
+        <div class="input-row">
+          <input type="text" id="shohiyou-buy-property" class="text-input" autocomplete="off" placeholder="例: ○○マンション 101号室">
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label" for="shohiyou-buy-customer">お客様名<small>※概算書に「○○様」と表示(任意)</small></label>
+        <div class="input-row">
+          <input type="text" id="shohiyou-buy-customer" class="text-input" autocomplete="off" placeholder="例: 山田 太郎">
+        </div>
+      </div>
+
+      <div class="field">
         <label class="field-label" for="shohiyou-price">物件価格</label>
         <div class="input-row">
           <input type="text" id="shohiyou-price" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
@@ -1402,10 +1513,28 @@
         ※ 火災保険料・ローン事務手数料・保証料・引越し費用などは「その他費用」にまとめて入力してください。<br>
         ※ 不動産取得税は購入後数ヶ月で通知されるため、別途準備が必要です。
       </p>
+
+      <div class="export-actions">
+        <button type="button" class="btn-export" id="shohiyou-buy-export-png">画像で保存・共有</button>
+        <button type="button" class="btn-export secondary" id="shohiyou-buy-export-pdf">PDFで保存・共有</button>
+      </div>
       </div><!-- /#shohiyou-buy -->
 
       <!-- ===== B: 売却時 (Phase 4-②) ===== -->
       <div class="sub-panel" id="shohiyou-sell">
+        <div class="field">
+          <label class="field-label" for="shohiyou-sell-property">物件名<small>※概算書に表示(任意)</small></label>
+          <div class="input-row">
+            <input type="text" id="shohiyou-sell-property" class="text-input" autocomplete="off" placeholder="例: ○○マンション 101号室">
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label" for="shohiyou-sell-customer">お客様名<small>※概算書に「○○様」と表示(任意)</small></label>
+          <div class="input-row">
+            <input type="text" id="shohiyou-sell-customer" class="text-input" autocomplete="off" placeholder="例: 山田 太郎">
+          </div>
+        </div>
+
         <div class="field">
           <label class="field-label" for="shohiyou-sell-price">売却価格</label>
           <div class="input-row">
@@ -1510,6 +1639,11 @@
           ※ 売却益が出た場合の譲渡所得税は別途必要です(「譲渡所得税」タブで試算可能)。<br>
           ※ 売買契約書の印紙税は売主・買主それぞれが負担するのが一般的(各1通保管・別印紙)。
         </p>
+
+        <div class="export-actions">
+          <button type="button" class="btn-export" id="shohiyou-sell-export-png">画像で保存・共有</button>
+          <button type="button" class="btn-export secondary" id="shohiyou-sell-export-pdf">PDFで保存・共有</button>
+        </div>
       </div><!-- /#shohiyou-sell -->
     </div>
 
@@ -2649,6 +2783,207 @@
   })();
 
   /* =========================================================
+   * Phase 6: 諸費用概算書の画像/PDF出力・共有
+   *   出力専用の非表示DOM(.print-doc)を生成 → html2canvas でキャプチャ
+   *   → PNG(toBlob) または PDF(jsPDF A4縦) → Web Share API or ダウンロード
+   *   関数宣言なので巻き上げにより呼び出し位置に依存しない
+   * ========================================================= */
+
+  // 作成日 (YYYY年MM月DD日 / YYYY-MM-DD)
+  function exportDateParts() {
+    const dt = new Date();
+    const y = dt.getFullYear();
+    const m = String(dt.getMonth() + 1).padStart(2, '0');
+    const d = String(dt.getDate()).padStart(2, '0');
+    return { jp: `${y}年${m}月${d}日`, iso: `${y}-${m}-${d}` };
+  }
+
+  // 物件名のファイル名向け正規化 (空欄は「無題」、空白・特殊文字は_に置換)
+  function exportSanitizeName(s) {
+    const t = (s || '').trim();
+    if (!t) return '無題';
+    return t.replace(/[\s\\/:*?"<>|]+/g, '_');
+  }
+
+  function exportFileName(kind, cfg) {
+    return `TK企画_諸費用概算_${cfg.type}_${exportSanitizeName(cfg.propertyName)}_${cfg.dateIso}.${kind}`;
+  }
+
+  // cfg → 印刷用ドキュメントDOMを生成
+  function buildPrintDoc(cfg) {
+    const mk = (tag, cls, text) => {
+      const el = document.createElement(tag);
+      if (cls) el.className = cls;
+      if (text != null) el.textContent = text;
+      return el;
+    };
+    const root = mk('div', 'print-doc');
+
+    // ヘッダー
+    const head = mk('div', 'print-head');
+    const top  = mk('div', 'print-head-top');
+    top.append(mk('h1', 'print-title', cfg.title), mk('div', 'print-date', cfg.dateJp + ' 作成'));
+    head.append(top);
+    const meta = mk('div', 'print-meta');
+    if (cfg.propertyName && cfg.propertyName.trim()) meta.append(mk('div', 'print-property', '物件名：' + cfg.propertyName.trim()));
+    if (cfg.customerName && cfg.customerName.trim()) meta.append(mk('div', 'print-customer', cfg.customerName.trim() + ' 様'));
+    if (meta.children.length) head.append(meta);
+    root.append(head);
+
+    // 本文
+    const body = mk('div', 'print-body');
+    body.append(mk('div', 'print-summary', cfg.summary));
+    const table = mk('div', 'print-table');
+    cfg.rows.forEach(r => {
+      const row = mk('div', 'print-row');
+      row.append(mk('span', 'print-row-label', r.label), mk('span', 'print-row-value', r.value));
+      table.append(row);
+    });
+    body.append(table);
+    if (cfg.total) {
+      const tr = mk('div', 'print-total');
+      tr.append(mk('span', 'print-total-label', cfg.total.label), mk('span', 'print-total-value', cfg.total.value));
+      body.append(tr);
+    }
+    if (cfg.rate) {
+      const rr = mk('div', 'print-rate');
+      rr.append(mk('span', null, cfg.rate.label), mk('span', null, cfg.rate.value));
+      body.append(rr);
+    }
+    root.append(body);
+
+    // フッター
+    const foot = mk('div', 'print-foot');
+    foot.append(
+      mk('p', 'print-note', '※本書は概算です。正確な税額・諸費用は税務署・税理士・司法書士・各取引先へご確認ください。'),
+      mk('p', 'print-company', '株式会社T・K企画')
+    );
+    root.append(foot);
+    return root;
+  }
+
+  // Blob を共有 (対応端末) またはダウンロード
+  async function exportShareOrDownload(blob, filename, mime) {
+    const file = new File([blob], filename, { type: mime });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: filename });
+        return;
+      } catch (e) {
+        if (e && e.name === 'AbortError') return; // ユーザーがキャンセル
+        // それ以外は ダウンロードにフォールバック
+      }
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  // 出力本体: kind='png'|'pdf'
+  async function exportDoc(kind, cfg) {
+    if (!window.html2canvas) {
+      alert('画像生成ライブラリの読込中です。少し待ってから再度お試しください。');
+      return;
+    }
+    if (kind === 'pdf' && !(window.jspdf && window.jspdf.jsPDF)) {
+      alert('PDF生成ライブラリの読込中です。少し待ってから再度お試しください。');
+      return;
+    }
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position: absolute; left: -9999px; top: 0;';
+    const doc = buildPrintDoc(cfg);
+    wrap.appendChild(doc);
+    document.body.appendChild(wrap);
+    try {
+      const canvas = await window.html2canvas(doc, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        windowWidth: doc.scrollWidth,
+        windowHeight: doc.scrollHeight,
+        onclone: (clonedDoc) => {
+          // 印刷用スタイルを確実に適用 (クローン側でも可視化)
+          clonedDoc.querySelectorAll('.print-doc').forEach(el => {
+            el.style.position = 'static';
+            el.style.left = '0';
+          });
+        },
+      });
+      const filename = exportFileName(kind, cfg);
+      if (kind === 'png') {
+        const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+        if (!blob) throw new Error('画像の生成に失敗しました');
+        await exportShareOrDownload(blob, filename, 'image/png');
+      } else {
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        const pageW = 210, pageH = 297;
+        let w = pageW, h = canvas.height * w / canvas.width;
+        if (h > pageH) { h = pageH; w = canvas.width * h / canvas.height; } // 縦長時はページ高に合わせる
+        pdf.addImage(imgData, 'PNG', (pageW - w) / 2, 0, w, h);
+        await exportShareOrDownload(pdf.output('blob'), filename, 'application/pdf');
+      }
+    } finally {
+      document.body.removeChild(wrap);
+    }
+  }
+
+  // パネルの出力ボタンを配線。opts: {panel, propertyEl, customerEl, summaryFn, title, type, pngBtn, pdfBtn}
+  function setupExport(opts) {
+    const { panel, propertyEl, customerEl, summaryFn, title, type, pngBtn, pdfBtn } = opts;
+    const btns = [pngBtn, pdfBtn];
+
+    function collect() {
+      const rows = [];
+      let total = null, rate = null;
+      panel.querySelectorAll('.results .result-row').forEach(r => {
+        if (r.hidden) return;
+        const labelEl = r.querySelector('.result-label');
+        const valueEl = r.querySelector('.result-value');
+        if (!labelEl || !valueEl) return;
+        const label = (labelEl.childNodes[0] && labelEl.childNodes[0].nodeValue || labelEl.textContent || '').trim();
+        const value = valueEl.textContent.trim();
+        if (r.classList.contains('total-separator')) total = { label, value };
+        else if (value.includes('%')) rate = { label, value };
+        else rows.push({ label, value });
+      });
+      const dt = exportDateParts();
+      return {
+        title, type,
+        propertyName: propertyEl.value,
+        customerName: customerEl.value,
+        summary: summaryFn(),
+        rows, total, rate,
+        dateJp: dt.jp, dateIso: dt.iso,
+      };
+    }
+
+    async function run(kind) {
+      const target = kind === 'png' ? pngBtn : pdfBtn;
+      const orig = target.textContent;
+      btns.forEach(b => b.disabled = true);
+      target.textContent = '生成中…';
+      try {
+        await exportDoc(kind, collect());
+      } catch (e) {
+        alert('生成に失敗しました: ' + (e && e.message ? e.message : e));
+      } finally {
+        btns.forEach(b => b.disabled = false);
+        target.textContent = orig;
+      }
+    }
+
+    pngBtn.addEventListener('click', () => run('png'));
+    pdfBtn.addEventListener('click', () => run('pdf'));
+  }
+
+  /* =========================================================
    * 諸費用合計 (売買シミュレーション)
    *   A: 購入時 — 仲介手数料・印紙税・登録免許税(所有権移転/抵当権設定)
    *              + 司法書士報酬 + その他費用 / 評価額未入力時 土地=価格×70%・建物=0
@@ -2753,6 +3088,8 @@
 
     function reset() {
       document.querySelectorAll('#shohiyou-buy input.num-input').forEach(i => { i.value = ''; });
+      $property.value         = '';
+      $customer.value         = '';
       $reduced.checked        = false;
       $taxable.checked        = false;
       $buildingTaxRow.hidden  = true;
@@ -2760,6 +3097,26 @@
       $other.value            = '0';
       recalc();
     }
+
+    // ----- 出力 (画像/PDF) -----
+    const $property = document.getElementById('shohiyou-buy-property');
+    const $customer = document.getElementById('shohiyou-buy-customer');
+    setupExport({
+      panel: document.getElementById('shohiyou-buy'),
+      propertyEl: $property,
+      customerEl: $customer,
+      title: '不動産購入時 諸費用概算書',
+      type: '購入',
+      pngBtn: document.getElementById('shohiyou-buy-export-png'),
+      pdfBtn: document.getElementById('shohiyou-buy-export-pdf'),
+      summaryFn: () => {
+        const price = ($price.value.trim() || '—');
+        const loan  = ($loan.value.trim()  || '0');
+        const tax   = $taxable.checked ? 'あり' : 'なし';
+        return `物件価格 ${price}万円 ／ 借入額 ${loan}万円 ／ 課税事業者対応: ${tax}`;
+      },
+    });
+
     return { recalc, reset };
     })();
 
@@ -2858,6 +3215,8 @@
 
       function reset() {
         document.querySelectorAll('#shohiyou-sell input.num-input').forEach(i => { i.value = ''; });
+        $property.value        = '';
+        $customer.value        = '';
         $taxable.checked       = false;
         $buildingTaxRow.hidden = true;
         $loan.value            = '0';
@@ -2867,6 +3226,25 @@
         $other.value           = '0';
         recalc();
       }
+
+      // ----- 出力 (画像/PDF) -----
+      const $property = document.getElementById('shohiyou-sell-property');
+      const $customer = document.getElementById('shohiyou-sell-customer');
+      setupExport({
+        panel: document.getElementById('shohiyou-sell'),
+        propertyEl: $property,
+        customerEl: $customer,
+        title: '不動産売却時 諸費用概算書',
+        type: '売却',
+        pngBtn: document.getElementById('shohiyou-sell-export-png'),
+        pdfBtn: document.getElementById('shohiyou-sell-export-pdf'),
+        summaryFn: () => {
+          const price = ($price.value.trim() || '—');
+          const loan  = ($loan.value.trim()  || '0');
+          const tax   = $taxable.checked ? 'あり' : 'なし';
+          return `売却価格 ${price}万円 ／ 借入残高 ${loan}万円 ／ 課税事業者対応: ${tax}`;
+        },
+      });
 
       recalc();
       return { recalc, reset };

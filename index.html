@@ -463,6 +463,8 @@
   }
   .result-cell.warn .result-value { color: var(--danger); }
   .result-cell.warn .result-value .unit { color: #f3c9bd; }
+  /* 価格逆算: 円の大きな数値(例 30,000,000円)をセル幅に収める */
+  .result-cell .result-value.price-cell { font-size: 17px; }
 
   /* 合計行の上に強めの区切り (諸費用合計タブ等) */
   .result-row.total-separator {
@@ -1302,6 +1304,14 @@
         <button type="button" class="btn-reset" data-reset="rimawari">リセット</button>
       </div>
 
+      <div class="sub-tabs" data-subtabs="rimawari">
+        <button type="button" class="sub-tab active" data-subtarget="rimawari-yield">利回り計算</button>
+        <button type="button" class="sub-tab"        data-subtarget="rimawari-reverse">価格逆算</button>
+      </div>
+
+      <!-- ===== A: 利回り計算 (Phase 2-⑧) ===== -->
+      <div class="sub-panel active" id="rimawari-yield">
+
       <div class="field">
         <label class="field-label" for="rimawari-price">物件価格</label>
         <div class="input-row">
@@ -1367,6 +1377,83 @@
         ※ 実質利回りには固都税・管理費・修繕積立金・保険料などの年間経費を含めて計算してください。<br>
         ※ 大規模修繕・原状回復費・退去時の広告料などは別途見込む必要があります。
       </p>
+      </div>
+      <!-- /A -->
+
+      <!-- ===== B: 価格逆算 (目標利回りから物件価格を逆算) ===== -->
+      <div class="sub-panel" id="rimawari-reverse">
+
+        <div class="field">
+          <label class="field-label" for="rimawari-r-rent">月額家賃合計</label>
+          <div class="input-row">
+            <input type="text" id="rimawari-r-rent" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+            <span class="unit-label">万円</span>
+          </div>
+          <p class="hint">※ 満室想定</p>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="rimawari-r-expense">年間経費</label>
+          <div class="input-row">
+            <input type="text" id="rimawari-r-expense" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+            <span class="unit-label">万円</span>
+          </div>
+          <p class="hint">※ 任意・空欄なら0 / 固都税・管理費・修繕積立・保険等</p>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="rimawari-r-cost">購入諸費用</label>
+          <div class="input-row">
+            <input type="text" id="rimawari-r-cost" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+            <span class="unit-label">万円</span>
+          </div>
+          <p class="hint">※ 任意・空欄なら0 / 仲介手数料・登記費用・印紙税等</p>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="rimawari-r-target-surface">目標表面利回り</label>
+          <div class="input-row">
+            <input type="text" id="rimawari-r-target-surface" class="num-input" inputmode="decimal" step="0.1" autocomplete="off" placeholder="例: 6.0">
+            <span class="unit-label">%</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="rimawari-r-target-net">目標実質利回り</label>
+          <div class="input-row">
+            <input type="text" id="rimawari-r-target-net" class="num-input" inputmode="decimal" step="0.1" autocomplete="off" placeholder="例: 5.0">
+            <span class="unit-label">%</span>
+          </div>
+        </div>
+
+        <div class="results">
+          <div class="result-grid">
+            <div class="result-cell" id="rimawari-r-cell-surface">
+              <span class="result-label">表面 <span id="rimawari-r-lab-surface">—</span>% 基準価格</span>
+              <span class="result-value price-cell empty" id="rimawari-r-out-surface">—<span class="unit">円</span></span>
+            </div>
+            <div class="result-cell" id="rimawari-r-cell-net">
+              <span class="result-label">実質 <span id="rimawari-r-lab-net">—</span>% 基準価格</span>
+              <span class="result-value price-cell empty" id="rimawari-r-out-net">—<span class="unit">円</span></span>
+            </div>
+          </div>
+
+          <div class="result-row" style="margin-top: 10px;">
+            <span class="result-label">年間家賃収入</span>
+            <span class="result-value result-sub empty" id="rimawari-r-out-rent">—<span class="unit">円</span></span>
+          </div>
+        </div>
+
+        <p class="hint hint-warn" id="rimawari-r-warn" hidden>諸費用が大きすぎて目標利回りを達成できません</p>
+
+        <p class="hint">
+          ※ 目標利回りから逆算した「適正購入価格」の目安です。実際の取引は市場相場・物件状態・将来性で変動します。<br>
+          ※ 表面利回り基準は満室想定。空室・家賃下落リスクは未考慮です。<br>
+          ※ 実質利回り基準には年間経費(固都税・管理費・修繕積立・保険等)と購入諸費用を入力してください。<br>
+          ※ 経費・諸費用が空欄の場合、実質利回り基準は表面利回りに近い数値になります。
+        </p>
+      </div>
+      <!-- /B -->
     </div>
 
   </section>
@@ -2785,7 +2872,85 @@
     }
 
     [$price, $rent, $expense, $cost].forEach(el => el.addEventListener('input', recalc));
-    setupReset('rimawari', recalc);
+
+    /* ----- サブタブB: 価格逆算 (目標利回りから物件価格を逆算) -----
+     *   年間家賃収入   = 月額家賃 × 12
+     *   表面基準価格   = 年間家賃 × 100 / 目標表面利回り(%)
+     *   実質基準価格   = (年間家賃 − 年間経費) × 100 / 目標実質利回り(%) − 購入諸費用
+     *   入力: 万円・利回り% / 価格出力: 円(1円未満切り捨て)
+     */
+    const $bRent     = document.getElementById('rimawari-r-rent');
+    const $bExpense  = document.getElementById('rimawari-r-expense');
+    const $bCost     = document.getElementById('rimawari-r-cost');
+    const $bTSurface = document.getElementById('rimawari-r-target-surface');
+    const $bTNet     = document.getElementById('rimawari-r-target-net');
+    const $bOutSurf  = document.getElementById('rimawari-r-out-surface');
+    const $bOutNet   = document.getElementById('rimawari-r-out-net');
+    const $bOutRent  = document.getElementById('rimawari-r-out-rent');
+    const $bLabSurf  = document.getElementById('rimawari-r-lab-surface');
+    const $bLabNet   = document.getElementById('rimawari-r-lab-net');
+    const $bCellNet  = document.getElementById('rimawari-r-cell-net');
+    const $bWarn     = document.getElementById('rimawari-r-warn');
+
+    function recalcB() {
+      const rentMan    = parseNum($bRent.value);
+      const expenseMan = parseNum($bExpense.value) ?? 0;
+      const costMan    = parseNum($bCost.value)    ?? 0;
+      const tSurface   = parseNum($bTSurface.value); // %
+      const tNet       = parseNum($bTNet.value);     // %
+
+      // 目標%ラベル: 入力された値をそのまま表示 (未入力/0なら —)
+      $bLabSurf.textContent = (tSurface != null && tSurface > 0) ? $bTSurface.value.trim() : '—';
+      $bLabNet.textContent  = (tNet     != null && tNet     > 0) ? $bTNet.value.trim()     : '—';
+
+      // 月額家賃0/未入力 → 両方とも表示なし
+      if (rentMan == null || rentMan <= 0) {
+        setResult($bOutSurf, null, 0);
+        setResult($bOutNet,  null, 0);
+        setResult($bOutRent, null, 0);
+        $bCellNet.classList.remove('warn');
+        $bWarn.hidden = true;
+        return;
+      }
+
+      const annualRent = rentMan * 10000 * 12; // 円
+      setResult($bOutRent, annualRent, 0);
+
+      // 表面利回り基準の物件価格 (目標未入力/0なら —)
+      if (tSurface != null && tSurface > 0) {
+        setResult($bOutSurf, Math.floor(annualRent * 100 / tSurface), 0);
+      } else {
+        setResult($bOutSurf, null, 0);
+      }
+
+      // 実質利回り基準の物件価格 (目標未入力/0なら —)
+      if (tNet != null && tNet > 0) {
+        const expenseYen = expenseMan * 10000;
+        const costYen    = costMan    * 10000;
+        const netPrice   = (annualRent - expenseYen) * 100 / tNet - costYen;
+        if (netPrice < 0) {
+          // 諸費用が大きすぎて目標利回りを達成できない
+          setResult($bOutNet, null, 0);
+          $bCellNet.classList.add('warn');
+          $bWarn.hidden = false;
+        } else {
+          setResult($bOutNet, Math.floor(netPrice), 0);
+          $bCellNet.classList.remove('warn');
+          $bWarn.hidden = true;
+        }
+      } else {
+        setResult($bOutNet, null, 0);
+        $bCellNet.classList.remove('warn');
+        $bWarn.hidden = true;
+      }
+    }
+
+    [$bRent, $bExpense, $bCost, $bTSurface, $bTNet].forEach(el => el.addEventListener('input', recalcB));
+
+    setupSubTabs('rimawari');
+
+    // リセット: 同カード内の全入力をクリア → A/B 両方を再計算
+    setupReset('rimawari', () => { recalc(); recalcB(); });
   })();
 
   /* =========================================================

@@ -476,10 +476,14 @@
     border-top: none;
   }
 
-  /* 結果のサイズ階層 (Sub=補足, Main=強調) */
+  /* 結果のサイズ階層 (Sub=補足, Main=強調, Grand=最大強調) */
   .result-value.result-sub  { font-size: 15px; }
   .result-value.result-main { font-size: 26px; font-weight: 700; }
   .result-value.result-main .unit { font-size: 12px; }
+  .result-value.result-grand { font-size: 32px; font-weight: 800; color: var(--gold); }
+  .result-value.result-grand .unit { font-size: 12px; }
+  .result-value.result-grand.warn { color: var(--danger); }
+  .result-value.result-grand.warn .unit { color: #f3c9bd; }
 
   .result-note {
     margin: 10px 0 0;
@@ -661,6 +665,7 @@
   <button class="tab"        data-target="rimawari" role="tab">利回り</button>
   <button class="tab"        data-target="shohiyou" role="tab">諸費用合計</button>
   <button class="tab"        data-target="gunyou"   role="tab">軍用地</button>
+  <button class="tab"        data-target="shiire"   role="tab">仕入れ査定</button>
 </nav>
 
 <main>
@@ -1825,6 +1830,157 @@
         ※ 主要施設の倍率は概ね30〜55倍の範囲ですが、市場により変動するため目安です。<br>
         ※ 借地料は防衛施設局と沖縄県軍用地主連合会の交渉により毎年見直されます。<br>
         ※ 実際の取引価格は仲介相場・需給により上下します。
+      </p>
+    </div>
+
+  </section>
+  <section id="shiire" class="panel" role="tabpanel">
+
+    <div class="card" data-calc="shiire">
+      <div class="card-head">
+        <h2 class="card-title">仕入れ査定 (業者目線)</h2>
+        <button type="button" class="btn-reset" data-reset="shiire">リセット</button>
+      </div>
+
+      <p class="hint" style="margin-top:0;">
+        業者(デベロッパー・アパート建築会社)の事業計画から逆算した「この土地に出せる仕入れ上限価格」を試算します。
+      </p>
+
+      <!-- ===== 土地条件 ===== -->
+      <div class="field">
+        <label class="field-label" for="shiire-land">土地面積</label>
+        <div class="input-row">
+          <input type="text" id="shiire-land" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+          <span class="unit-label">坪</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="shiire-far">容積率</label>
+        <div class="input-row">
+          <input type="text" id="shiire-far" class="num-input" inputmode="decimal" autocomplete="off" placeholder="例: 200">
+          <span class="unit-label">%</span>
+        </div>
+      </div>
+
+      <!-- ===== 建築計画 ===== -->
+      <div class="field">
+        <label class="field-label" for="shiire-unit-area">1戸あたり専有面積</label>
+        <div class="input-row">
+          <input type="text" id="shiire-unit-area" class="num-input" inputmode="decimal" autocomplete="off" placeholder="例: 25">
+          <span class="unit-label">㎡</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="shiire-occ">専有率</label>
+        <div class="input-row">
+          <input type="text" id="shiire-occ" class="num-input" inputmode="decimal" autocomplete="off" placeholder="75" value="75">
+          <span class="unit-label">%</span>
+        </div>
+        <p class="hint">※ 延床に対する専有部分の割合(廊下・階段等を除く)</p>
+      </div>
+
+      <div class="field">
+        <span class="field-label">構造</span>
+        <div class="radio-group">
+          <label><input type="radio" name="shiire-struct" value="wood">木造<small>50万/坪</small></label>
+          <label><input type="radio" name="shiire-struct" value="steel" checked>軽量鉄骨<small>70万/坪</small></label>
+          <label><input type="radio" name="shiire-struct" value="rc">RC造<small>90万/坪</small></label>
+          <label><input type="radio" name="shiire-struct" value="other">その他<small>手動入力</small></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="shiire-tsubo-price">建築坪単価</label>
+        <div class="input-row">
+          <input type="text" id="shiire-tsubo-price" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0" value="70">
+          <span class="unit-label">万円/坪</span>
+        </div>
+        <p class="hint">※ 構造選択で自動入力。手動で上書き可</p>
+      </div>
+
+      <!-- ===== 収益見込み ===== -->
+      <div class="field">
+        <label class="field-label" for="shiire-rent">1戸あたり月額家賃</label>
+        <div class="input-row">
+          <input type="text" id="shiire-rent" class="num-input" inputmode="decimal" autocomplete="off" placeholder="例: 10">
+          <span class="unit-label">万円</span>
+        </div>
+      </div>
+
+      <!-- ===== 業者目線パラメータ ===== -->
+      <div class="field">
+        <label class="field-label" for="shiire-yield">業者の期待利回り</label>
+        <div class="input-row">
+          <input type="text" id="shiire-yield" class="num-input" inputmode="decimal" step="0.1" autocomplete="off" placeholder="8.0" value="8.0">
+          <span class="unit-label">%</span>
+        </div>
+        <p class="hint">※ 完成物件の表面利回り。一般的に8〜10%</p>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="shiire-profit">業者の事業利益率</label>
+        <div class="input-row">
+          <input type="text" id="shiire-profit" class="num-input" inputmode="decimal" step="1" autocomplete="off" placeholder="10" value="10">
+          <span class="unit-label">%</span>
+        </div>
+        <p class="hint">※ 物件総額に対する業者の利益。一般的に10〜15%</p>
+      </div>
+
+      <!-- ===== 結果 ===== -->
+      <div class="results">
+        <div class="result-grid">
+          <div class="result-cell">
+            <span class="result-label">延床面積</span>
+            <span class="result-value empty" id="shiire-out-floor-m2">—<span class="unit">㎡</span></span>
+          </div>
+          <div class="result-cell">
+            <span class="result-label">延床面積</span>
+            <span class="result-value empty" id="shiire-out-floor-tsubo">—<span class="unit">坪</span></span>
+          </div>
+        </div>
+
+        <div class="result-row">
+          <span class="result-label">建築可能戸数</span>
+          <span class="result-value result-main empty" id="shiire-out-units">—<span class="unit">戸</span></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">年間家賃収入</span>
+          <span class="result-value result-sub empty" id="shiire-out-rent">—<span class="unit">円</span></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">物件総額 (完成評価)</span>
+          <span class="result-value result-sub empty" id="shiire-out-total">—<span class="unit">円</span></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">建築費</span>
+          <span class="result-value result-sub empty" id="shiire-out-build">—<span class="unit">円</span></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">業者利益</span>
+          <span class="result-value result-sub empty" id="shiire-out-profit">—<span class="unit">円</span></span>
+        </div>
+
+        <div class="result-row total-separator">
+          <span class="result-label">仕入れ可能土地価格 (上限)</span>
+          <span class="result-value result-grand empty" id="shiire-out-land-price">—<span class="unit">円</span></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">土地坪単価</span>
+          <span class="result-value result-sub empty" id="shiire-out-land-tsubo">—<span class="unit">万円/坪</span></span>
+        </div>
+      </div>
+
+      <p class="hint hint-warn" id="shiire-warn" hidden>業者目線では採算が合いません(家賃が低い or 建築費が高い)</p>
+
+      <p class="hint">
+        ※ これは業者目線の概算上限値です。実際の取引価格は地域相場・市場動向・物件条件で大きく変動します。<br>
+        ※ 容積率は用途地域による上限です。前面道路幅員規制(住居系で × 0.4 等)・斜線制限・日影規制等により、実際に建てられる延床面積はさらに制限される場合があります。<br>
+        ※ 専有率(初期75%)は建物形状・廊下構造により変動します(片廊下/中廊下/メゾネット等)。<br>
+        ※ 業者の期待利回り・事業利益率は会社・案件・市況により異なります。8〜10%・10〜15%は一般的な目安です。<br>
+        ※ 建築坪単価は構造・グレード・地域・時期で大きく変動します(初期値は標準的な目安)。<br>
+        ※ 沖縄ではRC造が主流(台風対策)です。
       </p>
     </div>
 
@@ -3492,6 +3648,168 @@
       recalcA();
       recalcB();
     });
+  })();
+
+  /* =========================================================
+   * Phase 9: 仕入れ査定 (業者目線の土地仕入れ可能価格逆算)
+   *   延床(㎡)   = 土地(坪) × (400/121) × 容積率/100
+   *   延床(坪)   = 延床(㎡) / (400/121) = 土地(坪) × 容積率/100
+   *   専有合計   = 延床(㎡) × 専有率/100
+   *   戸数       = floor(専有合計 / 1戸専有面積)
+   *   年間家賃   = 戸数 × 月額家賃(万円) × 10000 × 12
+   *   物件総額   = 年間家賃 / (期待利回り/100)
+   *   建築費     = 延床(坪) × 坪単価(万円/坪) × 10000
+   *   業者利益   = 物件総額 × 事業利益率/100
+   *   仕入れ上限 = 物件総額 − 建築費 − 業者利益
+   *   土地坪単価 = 仕入れ上限(円) / 10000 / 土地(坪)
+   * ========================================================= */
+  (() => {
+    const $land   = document.getElementById('shiire-land');
+    const $far    = document.getElementById('shiire-far');
+    const $unit   = document.getElementById('shiire-unit-area');
+    const $occ    = document.getElementById('shiire-occ');
+    const $tsubo  = document.getElementById('shiire-tsubo-price');
+    const $rent   = document.getElementById('shiire-rent');
+    const $yield  = document.getElementById('shiire-yield');
+    const $profit = document.getElementById('shiire-profit');
+    const $structs = Array.from(document.querySelectorAll('input[name="shiire-struct"]'));
+
+    const $outFloorM2    = document.getElementById('shiire-out-floor-m2');
+    const $outFloorTsubo = document.getElementById('shiire-out-floor-tsubo');
+    const $outUnits      = document.getElementById('shiire-out-units');
+    const $outRent       = document.getElementById('shiire-out-rent');
+    const $outTotal      = document.getElementById('shiire-out-total');
+    const $outBuild      = document.getElementById('shiire-out-build');
+    const $outProfit     = document.getElementById('shiire-out-profit');
+    const $outLandPrice  = document.getElementById('shiire-out-land-price');
+    const $outLandTsubo  = document.getElementById('shiire-out-land-tsubo');
+    const $warn          = document.getElementById('shiire-warn');
+
+    // 構造プリセット → 建築坪単価デフォルト (万円/坪)。other は手動入力 (null)
+    const STRUCT_DEFAULTS = { wood: 50, steel: 70, rc: 90, other: null };
+    let prevStruct = 'steel';
+
+    function getStruct() {
+      return ($structs.find(r => r.checked) || {}).value || 'steel';
+    }
+
+    // 戸数以降をすべて — にして終了する補助
+    function clearFromUnits() {
+      [$outUnits, $outRent, $outTotal, $outBuild, $outProfit, $outLandPrice, $outLandTsubo]
+        .forEach(el => setResult(el, null, 0));
+      $outLandPrice.classList.remove('warn');
+      $warn.hidden = true;
+    }
+
+    function recalc() {
+      const land      = parseNum($land.value);   // 坪
+      const far       = parseNum($far.value);     // %
+      const unitArea  = parseNum($unit.value);    // ㎡
+      const occ       = parseNum($occ.value);     // %
+      const tsubo     = parseNum($tsubo.value);   // 万円/坪
+      const rentMan   = parseNum($rent.value);    // 万円
+      const yieldPct  = parseNum($yield.value);   // %
+      const profitPct = parseNum($profit.value);  // %
+
+      // 土地面積0 or 容積率0 → 全結果 —
+      if (land == null || land <= 0 || far == null || far <= 0) {
+        setResult($outFloorM2, null, 2);
+        setResult($outFloorTsubo, null, 2);
+        clearFromUnits();
+        return;
+      }
+
+      const floorM2    = land * TSUBO_TO_M2 * (far / 100);
+      const floorTsubo = floorM2 / TSUBO_TO_M2; // = land × far/100
+      setResult($outFloorM2, floorM2, 2);
+      setResult($outFloorTsubo, floorTsubo, 2);
+
+      // 戸数 (専有率・1戸面積が必要)
+      let units = null;
+      if (unitArea != null && unitArea > 0 && occ != null && occ > 0) {
+        units = Math.floor((floorM2 * (occ / 100)) / unitArea);
+      }
+      if (units == null || units <= 0) {
+        clearFromUnits();
+        return;
+      }
+      setResult($outUnits, units, 0);
+
+      // 年間家賃収入 (家賃未入力は0扱い)
+      const annualRent = Math.floor(units * (rentMan ?? 0) * 10000 * 12);
+      setResult($outRent, annualRent, 0);
+
+      // 物件総額 (期待利回りが必要)
+      if (yieldPct == null || yieldPct <= 0) {
+        [$outTotal, $outBuild, $outProfit, $outLandPrice, $outLandTsubo].forEach(el => setResult(el, null, 0));
+        $outLandPrice.classList.remove('warn');
+        $warn.hidden = true;
+        return;
+      }
+      const total = annualRent / (yieldPct / 100);
+      setResult($outTotal, Math.floor(total), 0);
+
+      // 建築費 (坪単価未入力 → 建築費以降 —)
+      if (tsubo == null || tsubo <= 0) {
+        [$outBuild, $outProfit, $outLandPrice, $outLandTsubo].forEach(el => setResult(el, null, 0));
+        $outLandPrice.classList.remove('warn');
+        $warn.hidden = true;
+        return;
+      }
+      const build = floorTsubo * tsubo * 10000;
+      setResult($outBuild, Math.floor(build), 0);
+
+      // 業者利益
+      const profit = total * ((profitPct != null && profitPct > 0 ? profitPct : 0) / 100);
+      setResult($outProfit, Math.floor(profit), 0);
+
+      // 仕入れ可能土地価格 (上限) と 土地坪単価
+      const landPrice = total - build - profit;
+      setResult($outLandPrice, Math.floor(landPrice), 0);
+      setResult($outLandTsubo, landPrice / 10000 / land, 1);
+
+      // マイナス → 採算割れ警告 (結果はそのまま表示)
+      if (landPrice < 0) {
+        $outLandPrice.classList.add('warn');
+        $warn.hidden = false;
+      } else {
+        $outLandPrice.classList.remove('warn');
+        $warn.hidden = true;
+      }
+    }
+
+    // 構造変更: 坪単価が「前構造のデフォルト値のまま(=手動変更なし)」なら新デフォルトで上書き。
+    //           手動編集済みの値は尊重。「その他」は空欄化。
+    $structs.forEach(r => r.addEventListener('change', () => {
+      const cur = getStruct();
+      const prevDefault = STRUCT_DEFAULTS[prevStruct];
+      const curVal = parseNum($tsubo.value);
+      const untouched = (prevDefault == null)
+        ? ($tsubo.value.trim() === '')
+        : (curVal === prevDefault);
+      if (untouched) {
+        const next = STRUCT_DEFAULTS[cur];
+        $tsubo.value = (next == null) ? '' : String(next);
+      }
+      prevStruct = cur;
+      recalc();
+    }));
+
+    [$land, $far, $unit, $occ, $tsubo, $rent, $yield, $profit]
+      .forEach(el => el.addEventListener('input', recalc));
+
+    // リセット: 構造=軽量鉄骨, 坪単価70, 専有率75, 期待利回り8.0, 事業利益率10
+    setupReset('shiire', () => {
+      $structs.forEach(r => { r.checked = r.value === 'steel'; });
+      prevStruct = 'steel';
+      $occ.value    = '75';
+      $tsubo.value  = '70';
+      $yield.value  = '8.0';
+      $profit.value = '10';
+      recalc();
+    });
+
+    recalc();
   })();
 </script>
 

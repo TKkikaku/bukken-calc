@@ -3,7 +3,7 @@
  * 外部CDN（html2canvas / jsPDF / Google Fonts）はキャッシュせずネットワーク優先
  * 更新時は CACHE_NAME のバージョン番号を上げる
  */
-const CACHE_NAME = 'bukken-calc-v2';
+const CACHE_NAME = 'bukken-calc-v3';
 
 const PRECACHE_URLS = [
   './',

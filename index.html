@@ -1842,6 +1842,14 @@
         <button type="button" class="btn-reset" data-reset="shiire">リセット</button>
       </div>
 
+      <div class="sub-tabs" data-subtabs="shiire">
+        <button type="button" class="sub-tab active" data-subtarget="shiire-lease">賃貸モデル</button>
+        <button type="button" class="sub-tab"        data-subtarget="shiire-uridashi">建売モデル</button>
+      </div>
+
+      <!-- ===== A: 賃貸モデル (Phase 9 内容そのまま) ===== -->
+      <div class="sub-panel active" id="shiire-lease">
+
       <p class="hint" style="margin-top:0;">
         業者(デベロッパー・アパート建築会社)の事業計画から逆算した「この土地に出せる仕入れ上限価格」を試算します。
       </p>
@@ -1982,6 +1990,122 @@
         ※ 建築坪単価は構造・グレード・地域・時期で大きく変動します(初期値は標準的な目安)。<br>
         ※ 沖縄ではRC造が主流(台風対策)です。
       </p>
+      </div><!-- /shiire-lease -->
+
+      <!-- ===== B: 建売モデル (Phase 10 新規) ===== -->
+      <div class="sub-panel" id="shiire-uridashi">
+
+      <p class="hint" style="margin-top:0;">
+        建売業者(飯田産業など分譲一戸建てを建てて販売する会社)の事業計画から逆算した「この土地に出せる仕入れ上限価格」を試算します。
+      </p>
+
+      <!-- ===== 土地条件 ===== -->
+      <div class="field">
+        <label class="field-label" for="shiireb-land">土地面積</label>
+        <div class="input-row">
+          <input type="text" id="shiireb-land" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0">
+          <span class="unit-label">坪</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="shiireb-plot">1区画あたり面積</label>
+        <div class="input-row">
+          <input type="text" id="shiireb-plot" class="num-input" inputmode="decimal" autocomplete="off" placeholder="例: 25">
+          <span class="unit-label">坪</span>
+        </div>
+        <p class="hint">※ 建売1棟分の敷地サイズ</p>
+      </div>
+
+      <!-- ===== 建築計画 ===== -->
+      <div class="field">
+        <span class="field-label">構造</span>
+        <div class="radio-group">
+          <label><input type="radio" name="shiireb-struct" value="wood" checked>木造<small>45万/坪</small></label>
+          <label><input type="radio" name="shiireb-struct" value="steel">軽量鉄骨<small>65万/坪</small></label>
+          <label><input type="radio" name="shiireb-struct" value="rc">RC造<small>85万/坪</small></label>
+          <label><input type="radio" name="shiireb-struct" value="other">その他<small>手動入力</small></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="shiireb-tsubo-price">建築坪単価</label>
+        <div class="input-row">
+          <input type="text" id="shiireb-tsubo-price" class="num-input" inputmode="decimal" autocomplete="off" placeholder="0" value="45">
+          <span class="unit-label">万円/坪</span>
+        </div>
+        <p class="hint">※ 構造選択で自動入力。手動で上書き可</p>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="shiireb-build-tsubo">1棟あたり建坪</label>
+        <div class="input-row">
+          <input type="text" id="shiireb-build-tsubo" class="num-input" inputmode="decimal" autocomplete="off" placeholder="例: 30">
+          <span class="unit-label">坪</span>
+        </div>
+        <p class="hint">※ 建築面積</p>
+      </div>
+
+      <!-- ===== 販売計画 ===== -->
+      <div class="field">
+        <label class="field-label" for="shiireb-sale">1棟あたり想定販売価格</label>
+        <div class="input-row">
+          <input type="text" id="shiireb-sale" class="num-input" inputmode="decimal" autocomplete="off" placeholder="例: 3500">
+          <span class="unit-label">万円</span>
+        </div>
+        <p class="hint">※ エリアによって変動。ポータルサイト等で近隣相場を確認</p>
+      </div>
+
+      <!-- ===== 業者目線パラメータ ===== -->
+      <div class="field">
+        <label class="field-label" for="shiireb-profit">建売業者の利益率</label>
+        <div class="input-row">
+          <input type="text" id="shiireb-profit" class="num-input" inputmode="decimal" step="1" autocomplete="off" placeholder="20" value="20">
+          <span class="unit-label">%</span>
+        </div>
+        <p class="hint">※ 売上総額に対する業者の利益。一般的に10〜25%</p>
+      </div>
+
+      <!-- ===== 結果 ===== -->
+      <div class="results">
+        <div class="result-row">
+          <span class="result-label">区画数</span>
+          <span class="result-value result-main empty" id="shiireb-out-plots">—<span class="unit">区画</span></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">売上総額</span>
+          <span class="result-value result-sub empty" id="shiireb-out-sales">—<span class="unit">円</span></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">建築費合計</span>
+          <span class="result-value result-sub empty" id="shiireb-out-build">—<span class="unit">円</span></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">業者利益</span>
+          <span class="result-value result-sub empty" id="shiireb-out-profit">—<span class="unit">円</span></span>
+        </div>
+
+        <div class="result-row total-separator">
+          <span class="result-label">仕入れ可能土地価格 (上限)</span>
+          <span class="result-value result-grand empty" id="shiireb-out-land-price">—<span class="unit">円</span></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">土地坪単価</span>
+          <span class="result-value result-sub empty" id="shiireb-out-land-tsubo">—<span class="unit">万円/坪</span></span>
+        </div>
+      </div>
+
+      <p class="hint hint-warn" id="shiireb-warn" hidden>業者目線では採算が合いません(販売価格に対して建築費・利益確保が厳しい)</p>
+
+      <p class="hint">
+        ※ これは建売業者目線の概算上限値です。実際の取引価格はエリア相場・市場動向で大きく変動します。<br>
+        ※ 1棟想定販売価格は、ポータルサイト(SUUMOやアットホーム等)で近隣の建売販売価格を確認するのが現実的です。<br>
+        ※ 1区画面積は建売業者により異なります(沖縄では20〜30坪が一般的)。<br>
+        ※ 接道条件・前面道路幅員によっては分筆できる区画数が減る場合があります。<br>
+        ※ 建売業者の利益率は10〜25%程度が一般的ですが、会社・案件により異なります。<br>
+        ※ 建売は木造が主流ですが、沖縄ではRC造の建売もあります(台風対策で建築費は上がる)。
+      </p>
+      </div><!-- /shiire-uridashi -->
     </div>
 
   </section>
@@ -3808,6 +3932,142 @@
       $profit.value = '10';
       recalc();
     });
+
+    recalc();
+  })();
+
+  /* =========================================================
+   * カード11-B: 仕入れ査定 — 建売モデル (Phase 10)
+   *   建売業者の事業計画から土地仕入れ可能価格を逆算
+   * ========================================================= */
+  setupSubTabs('shiire');
+  (() => {
+    const $land   = document.getElementById('shiireb-land');        // 坪
+    const $plot   = document.getElementById('shiireb-plot');        // 坪 (1区画)
+    const $tsubo  = document.getElementById('shiireb-tsubo-price'); // 万円/坪
+    const $build  = document.getElementById('shiireb-build-tsubo'); // 坪 (1棟建坪)
+    const $sale   = document.getElementById('shiireb-sale');        // 万円 (1棟販売価格)
+    const $profit = document.getElementById('shiireb-profit');      // %
+    const $structs = Array.from(document.querySelectorAll('input[name="shiireb-struct"]'));
+
+    const $outPlots     = document.getElementById('shiireb-out-plots');
+    const $outSales     = document.getElementById('shiireb-out-sales');
+    const $outBuild     = document.getElementById('shiireb-out-build');
+    const $outProfit    = document.getElementById('shiireb-out-profit');
+    const $outLandPrice = document.getElementById('shiireb-out-land-price');
+    const $outLandTsubo = document.getElementById('shiireb-out-land-tsubo');
+    const $warn         = document.getElementById('shiireb-warn');
+
+    // 構造プリセット → 建築坪単価デフォルト (万円/坪)。other は手動入力 (null)
+    const STRUCT_DEFAULTS = { wood: 45, steel: 65, rc: 85, other: null };
+    let prevStruct = 'wood';
+
+    function getStruct() {
+      return ($structs.find(r => r.checked) || {}).value || 'wood';
+    }
+
+    // 区画数以降をすべて — にして終了する補助
+    function clearFromPlots() {
+      [$outPlots, $outSales, $outBuild, $outProfit, $outLandPrice, $outLandTsubo]
+        .forEach(el => setResult(el, null, 0));
+      $outLandPrice.classList.remove('warn');
+      $warn.hidden = true;
+    }
+
+    function recalc() {
+      const land      = parseNum($land.value);   // 坪
+      const plot      = parseNum($plot.value);    // 坪
+      const tsubo     = parseNum($tsubo.value);   // 万円/坪
+      const buildT    = parseNum($build.value);   // 坪
+      const saleMan   = parseNum($sale.value);    // 万円
+      const profitPct = parseNum($profit.value);  // %
+
+      // 土地面積0 or 1区画面積0 → 全結果 —
+      if (land == null || land <= 0 || plot == null || plot <= 0) {
+        clearFromPlots();
+        return;
+      }
+
+      // 区画数 = floor(土地面積 / 1区画面積)
+      const plots = Math.floor(land / plot);
+      if (plots <= 0) {
+        clearFromPlots();
+        return;
+      }
+      setResult($outPlots, plots, 0);
+
+      // 売上総額 (1棟想定販売価格が必要)
+      if (saleMan == null || saleMan <= 0) {
+        [$outSales, $outBuild, $outProfit, $outLandPrice, $outLandTsubo].forEach(el => setResult(el, null, 0));
+        $outLandPrice.classList.remove('warn');
+        $warn.hidden = true;
+        return;
+      }
+      const salesMan = plots * saleMan;             // 万円
+      setResult($outSales, Math.floor(salesMan * 10000), 0);
+
+      // 建築費合計 (坪単価・1棟建坪が必要)
+      if (tsubo == null || tsubo <= 0 || buildT == null || buildT <= 0) {
+        [$outBuild, $outProfit, $outLandPrice, $outLandTsubo].forEach(el => setResult(el, null, 0));
+        $outLandPrice.classList.remove('warn');
+        $warn.hidden = true;
+        return;
+      }
+      const buildMan = plots * buildT * tsubo;      // 万円
+      setResult($outBuild, Math.floor(buildMan * 10000), 0);
+
+      // 業者利益
+      const profMan = salesMan * ((profitPct != null && profitPct > 0 ? profitPct : 0) / 100); // 万円
+      setResult($outProfit, Math.floor(profMan * 10000), 0);
+
+      // 仕入れ可能土地価格 (上限) と 土地坪単価
+      const landMan = salesMan - buildMan - profMan; // 万円
+      setResult($outLandPrice, Math.floor(landMan * 10000), 0);
+      setResult($outLandTsubo, landMan / land, 1);
+
+      // マイナス → 採算割れ警告 (結果はそのまま表示)
+      if (landMan < 0) {
+        $outLandPrice.classList.add('warn');
+        $warn.hidden = false;
+      } else {
+        $outLandPrice.classList.remove('warn');
+        $warn.hidden = true;
+      }
+    }
+
+    // 構造変更: 坪単価が「前構造のデフォルト値のまま(=手動変更なし)」なら新デフォルトで上書き。
+    //           手動編集済みの値は尊重。「その他」は空欄化。
+    $structs.forEach(r => r.addEventListener('change', () => {
+      const cur = getStruct();
+      const prevDefault = STRUCT_DEFAULTS[prevStruct];
+      const curVal = parseNum($tsubo.value);
+      const untouched = (prevDefault == null)
+        ? ($tsubo.value.trim() === '')
+        : (curVal === prevDefault);
+      if (untouched) {
+        const next = STRUCT_DEFAULTS[cur];
+        $tsubo.value = (next == null) ? '' : String(next);
+      }
+      prevStruct = cur;
+      recalc();
+    }));
+
+    [$land, $plot, $tsubo, $build, $sale, $profit]
+      .forEach(el => el.addEventListener('input', recalc));
+
+    // リセット: 構造=木造, 坪単価45, 利益率20。
+    // 入力欄のクリアは賃貸モデル側 setupReset('shiire') がカード内 num-input を一括処理するため、
+    // ここでは建売モデルのデフォルト値の再セットのみ行う(クリアは二重に行わない)。
+    const $resetBtn = document.querySelector('[data-reset="shiire"]');
+    if ($resetBtn) {
+      $resetBtn.addEventListener('click', () => {
+        $structs.forEach(r => { r.checked = r.value === 'wood'; });
+        prevStruct = 'wood';
+        $tsubo.value  = '45';
+        $profit.value = '20';
+        recalc();
+      });
+    }
 
     recalc();
   })();
